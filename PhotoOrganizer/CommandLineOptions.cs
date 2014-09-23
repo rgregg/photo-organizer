@@ -21,7 +21,6 @@ namespace PhotoOrganizer
         [Option("images", HelpText = "Enable organizing pictures", DefaultValue = true)]
         public bool ActOnImages { get; set; }
 
-        
         [Option("verbose", HelpText="Output verbose logging")]
         public bool VerboseOutput { get; set; }
 
@@ -48,6 +47,9 @@ namespace PhotoOrganizer
 
         [Option("dest-format", HelpText="Destination folder format. Uses the DateTime formatting syntax.")]
         public string DestinationFormatString { get; set; }
+
+        [Option('r', "recursive", HelpText="Recurse through subfolders of the source folder")]
+        public bool Recursive { get; set; }
 
         internal ExistingFileMode ExistingFileBehavior
         {

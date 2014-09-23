@@ -32,6 +32,9 @@ namespace PhotoOrganizer
 
         public void ProcessSourceFolder(DirectoryInfo source)
         {
+            if (Options.VerboseOutput)
+                Console.WriteLine("Process source folder {0}.", source.FullName);
+
             var files = source.EnumerateFiles();
             if (this.Options.RunInParallel)
             {
@@ -43,6 +46,22 @@ namespace PhotoOrganizer
                 foreach (var file in files)
                 {
                     previousDateTime = ProcessFile(file, previousDateTime);
+                }
+            }
+
+            if (this.Options.Recursive)
+            {
+                var folders = source.EnumerateDirectories();
+                if (Options.RunInParallel)
+                {
+                    Parallel.ForEach(folders, folder => ProcessSourceFolder(folder));
+                }
+                else
+                {
+                    foreach (var folder in folders) 
+                    { 
+                        ProcessSourceFolder(folder); 
+                    }
                 }
             }
         }
