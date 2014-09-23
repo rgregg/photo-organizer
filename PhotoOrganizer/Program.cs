@@ -36,6 +36,15 @@ namespace PhotoOrganizer
                 return;
             }
 
+            if (opts.DeleteSourceOnExistingFile)
+            {
+                Console.Write("Delete source files on existing files in destination is enabled.\nTHIS MAY CAUSE DATA LOSS, are you sure? [Y/N]: ");
+                var key = Console.ReadKey();
+                if (!(key.KeyChar == 'y' || key.KeyChar == 'Y'))
+                    return;
+                Console.WriteLine();
+            }
+
             FileOrganizer organizer = new FileOrganizer(destination, opts);
             organizer.ProcessSourceFolder(source);
         }
