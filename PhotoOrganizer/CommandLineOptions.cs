@@ -39,6 +39,9 @@ namespace PhotoOrganizer
         [Option("delete", HelpText = "Delete the source file when the same file already exists in the destination", MutuallyExclusiveSet = "existBehavior")]
         public bool DeleteSourceOnExistingFile { get; set; }
 
+        [Option("verify-delete", HelpText="Before deleting source file, verify it is identical with the destination", DefaultValue = false)]
+        public bool VerifyFilesAreIdentical { get; set; }
+
         [Option("parallel", HelpText="Perform the file operations in parallel")]
         public bool RunInParallel { get; set; }
 

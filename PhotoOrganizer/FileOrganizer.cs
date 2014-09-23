@@ -125,6 +125,49 @@ namespace PhotoOrganizer
             return dateTaken;
         }
 
+        private void VerboseLog(string message)
+        {
+            if (Options.VerboseOutput)
+                Console.WriteLine(message);
+        }
+
+        private bool FilesAreIdentifical(FileInfo source, FileInfo destination)
+        {
+            if (source.Name != destination.Name)
+            {
+                VerboseLog("Match failed: different filenames");
+                return false;
+            }
+
+            if (source.Length != destination.Length)
+            {
+                VerboseLog("Match failed: different sizes");
+                return false;
+            }
+
+            var source_crc = GetChecksum(source);
+            var dest_crc = GetChecksum(destination);
+            if (source_crc != dest_crc)
+            {
+                VerboseLog("Match failed: different hashes");
+                return false;
+            }
+
+            VerboseLog("Match succeeded. Files are the same.");
+            return true;
+        }
+
+        private string GetChecksum(FileInfo file)
+        {
+            int buffer_size = 1024 * 1024;
+            using (BufferedStream stream = new BufferedStream(file.OpenRead(), buffer_size))
+            {
+                System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create();
+                byte[] checksum = md5.ComputeHash(stream);
+                return BitConverter.ToString(checksum).Replace("-", string.Empty);
+            }
+        }
+
         private void FileAlreadyExists(FileInfo sourceFile, string targetPath)
         {
             switch (Options.ExistingFileBehavior)
@@ -159,7 +202,10 @@ namespace PhotoOrganizer
                     }
                 case ExistingFileMode.DeleteSourceFile:
                     {
-                        sourceFile.Delete();
+                        if (!Options.VerifyFilesAreIdentical || FilesAreIdentifical(sourceFile, new FileInfo(targetPath)))
+                        {
+                            sourceFile.Delete();
+                        }
                         break;
                     }
                 default:
