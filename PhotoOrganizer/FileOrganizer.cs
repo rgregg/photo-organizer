@@ -13,15 +13,11 @@ namespace PhotoOrganizer
 
         CommandLineOptions Options { get; set; }
 
-        public string DirectoryFormat { get; set; }
-        
-
         public ExistingFileMode ExistingFileBehavior { get; set; }
 
         public FileOrganizer(DirectoryInfo destination)
         {
             this.Destination = destination;
-            this.DirectoryFormat = "yyyy\\\\yyyy-MM-MMMM";
         }
 
         public FileOrganizer(DirectoryInfo destination, CommandLineOptions opts) : this(destination)
@@ -86,7 +82,7 @@ namespace PhotoOrganizer
 
             if (moveThisFile && dateTaken.HasValue)
             {
-                string targetFullName = dateTaken.Value.ToString(this.DirectoryFormat);
+                string targetFullName = dateTaken.Value.ToString(Options.DirectoryFormat);
                 DirectoryInfo targetDirectory = new DirectoryInfo(Path.Combine(this.Destination.FullName, targetFullName));
                 string targetPath = Path.Combine(targetDirectory.FullName, file.Name);
 

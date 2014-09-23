@@ -45,8 +45,8 @@ namespace PhotoOrganizer
         [Option("infer-video-date", HelpText="Infer the date a video was recorded based on the images before it (not compatible with parallel mode.")]
         public bool InferVideoDate { get; set; }
 
-        [Option("dest-format", HelpText="Destination folder format. Uses the DateTime formatting syntax.")]
-        public string DestinationFormatString { get; set; }
+        [Option("dest-format", HelpText = "Destination folder format. Uses the DateTime formatting syntax.", DefaultValue = "yyyy\\\\yyyy-MM-MMMM")]
+        public string DirectoryFormat { get; set; }
 
         [Option('r', "recursive", HelpText="Recurse through subfolders of the source folder")]
         public bool Recursive { get; set; }
