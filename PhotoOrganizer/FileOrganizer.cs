@@ -13,8 +13,6 @@ namespace PhotoOrganizer
 
         CommandLineOptions Options { get; set; }
 
-        public ExistingFileMode ExistingFileBehavior { get; set; }
-
         public FileOrganizer(DirectoryInfo destination)
         {
             this.Destination = destination;
@@ -100,10 +98,11 @@ namespace PhotoOrganizer
                         switch (ioex.HResult)
                         {
                             case -2147024816:   // File already exists
+                            case -2147024713:
                                 FileAlreadyExists(file, targetPath);
                                 break;
                             default:
-                                Console.WriteLine("File skipped (IOException {0}): {1}", ioex.HResult, file.Name);
+                                Console.WriteLine("File skipped (IOException {0}): {1}\n{2}", ioex.HResult, file.Name, ioex.Message);
                                 break;
                         }
 
@@ -126,13 +125,13 @@ namespace PhotoOrganizer
             return dateTaken;
         }
 
-        private void FileAlreadyExists(FileInfo file, string targetPath)
+        private void FileAlreadyExists(FileInfo sourceFile, string targetPath)
         {
-            switch (this.ExistingFileBehavior)
+            switch (Options.ExistingFileBehavior)
             {
                 case ExistingFileMode.Skip:
                     {
-                        Console.WriteLine("Skipping file (already exists): " + file.Name);
+                        Console.WriteLine("Skipping file (already exists): " + sourceFile.Name);
                         break;
                     }
                 case ExistingFileMode.Overwrite:
@@ -141,7 +140,7 @@ namespace PhotoOrganizer
                         try
                         {
                             targetFile.Delete();
-                            DoFileAction(file, targetPath);
+                            DoFileAction(sourceFile, targetPath);
                         }
                         catch (Exception ex)
                         {
@@ -155,7 +154,12 @@ namespace PhotoOrganizer
                         DirectoryInfo targetDirectory = targetFile.Directory;
                         string renamedTargetPath = GenerateNewTargetFileName(targetPath, targetDirectory);
                         
-                        DoFileAction(file, renamedTargetPath);
+                        DoFileAction(sourceFile, renamedTargetPath);
+                        break;
+                    }
+                case ExistingFileMode.DeleteSourceFile:
+                    {
+                        sourceFile.Delete();
                         break;
                     }
                 default:

@@ -60,7 +60,7 @@ namespace PhotoOrganizer
                 else if (OverwriteOnExistingFile)
                     return ExistingFileMode.Overwrite;
                 else if (DeleteSourceOnExistingFile)
-                    return ExistingFileMode.Delete;
+                    return ExistingFileMode.DeleteSourceFile;
                 else
                     return ExistingFileMode.Skip;
             }
@@ -72,6 +72,6 @@ namespace PhotoOrganizer
         Skip,
         Rename,
         Overwrite,
-        Delete
+        DeleteSourceFile
     }
 }
