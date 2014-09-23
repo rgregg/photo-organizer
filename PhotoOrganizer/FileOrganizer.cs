@@ -182,6 +182,8 @@ namespace PhotoOrganizer
                         FileInfo targetFile = new FileInfo(targetPath);
                         try
                         {
+                            VerboseLog("File already exists: Overwriting destination file");
+
                             targetFile.Delete();
                             DoFileAction(sourceFile, targetPath);
                         }
@@ -193,6 +195,8 @@ namespace PhotoOrganizer
                     }
                 case ExistingFileMode.Rename:
                     {
+                        VerboseLog("File already exists: Renaming on copy to destination");
+
                         FileInfo targetFile = new FileInfo(targetPath);
                         DirectoryInfo targetDirectory = targetFile.Directory;
                         string renamedTargetPath = GenerateNewTargetFileName(targetPath, targetDirectory);
@@ -204,6 +208,7 @@ namespace PhotoOrganizer
                     {
                         if (!Options.VerifyFilesAreIdentical || FilesAreIdentifical(sourceFile, new FileInfo(targetPath)))
                         {
+                            VerboseLog("File already exists: deleting source file.");
                             sourceFile.Delete();
                         }
                         break;
