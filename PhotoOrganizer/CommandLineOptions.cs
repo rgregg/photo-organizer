@@ -48,7 +48,7 @@ namespace PhotoOrganizer
         [Option("infer-video-date", HelpText="Infer the date a video was recorded based on the images before it (not compatible with parallel mode.")]
         public bool InferVideoDate { get; set; }
 
-        [Option("dest-format", HelpText = "Destination folder format. Uses the DateTime formatting syntax.", DefaultValue = "yyyy\\\\yyyy-MM-MMMM")]
+        [Option("dest-format", HelpText = "Destination folder format. Uses the DateTime formatting syntax.", DefaultValue = @"yyyy\\yyyy-MM-MMMM")]
         public string DirectoryFormat { get; set; }
 
         [Option('r', "recursive", HelpText="Recurse through subfolders of the source folder")]
@@ -63,18 +63,12 @@ namespace PhotoOrganizer
                 else if (OverwriteOnExistingFile)
                     return ExistingFileMode.Overwrite;
                 else if (DeleteSourceOnExistingFile)
-                    return ExistingFileMode.DeleteSourceFile;
+                    return ExistingFileMode.DeleteSourceFileWhenIdentical;
                 else
-                    return ExistingFileMode.Skip;
+                    return ExistingFileMode.Ignore;
             }
         }
     }
 
-    public enum ExistingFileMode
-    {
-        Skip,
-        Rename,
-        Overwrite,
-        DeleteSourceFile
-    }
+    
 }

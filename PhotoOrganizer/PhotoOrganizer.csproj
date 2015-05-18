@@ -47,7 +47,14 @@
   <ItemGroup>
     <Compile Include="CFileInfo.cs" />
     <Compile Include="CommandLineOptions.cs" />
+    <Compile Include="EnumExtensions.cs" />
     <Compile Include="FileOrganizer.cs" />
+    <Compile Include="Interfaces\FileExtensionMethods.cs" />
+    <Compile Include="Interfaces\IDirectory.cs" />
+    <Compile Include="Interfaces\IFile.cs" />
+    <Compile Include="Interfaces\IFileSystemItem.cs" />
+    <Compile Include="LocalFileSystem\LocalDirectory.cs" />
+    <Compile Include="LocalFileSystem\LocalFile.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -22,14 +22,14 @@ namespace PhotoOrganizer
             if (string.IsNullOrEmpty(opts.SourceFolder))
                 opts.SourceFolder = System.Environment.CurrentDirectory;
 
-            DirectoryInfo destination = new DirectoryInfo(opts.DestinationFolder);
+            IDirectory destination = new LocalFileSystem.LocalDirectory(opts.DestinationFolder);
             if (!destination.Exists)
             {
                 Console.WriteLine("Error: Destination folder doesn't exist.");
                 return;
             }
 
-            DirectoryInfo source = new DirectoryInfo(opts.SourceFolder);
+            IDirectory source = new LocalFileSystem.LocalDirectory(opts.SourceFolder);
             if (!source.Exists)
             {
                 Console.WriteLine("Error: Source folder doesn't exist. Nothing to do.");
