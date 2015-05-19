@@ -99,7 +99,7 @@ namespace PhotoOrganizer.LocalFileSystem
         /// </summary>
         /// <param name="targetDirectory"></param>
         /// <returns></returns>
-        private string GenerateUniqueFilename(IDirectory targetDirectory)
+        private async Task<string> GenerateUniqueFilenameAsync(IDirectory targetDirectory)
         {
             int incrementValue = 1;
             string rootFilename = Path.GetFileNameWithoutExtension(this.Name);
@@ -109,7 +109,7 @@ namespace PhotoOrganizer.LocalFileSystem
             for(int i=1; i<100; i++)
             {
                 var newFilename = string.Format("{0} {1}.{2}", rootFilename, incrementValue, extension);
-                newTargetFile = this.CurrentDirectory.GetFile(newFilename);
+                newTargetFile = await this.CurrentDirectory.GetFileAsync(newFilename);
                 if (!newTargetFile.Exists)
                     break;
             }
@@ -121,11 +121,12 @@ namespace PhotoOrganizer.LocalFileSystem
         }
 
 
-        public void CopyTo(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort, string newFilename = null)
+        public async Task CopyToAsync(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort, string newFilename = null)
         {
             if (targetDirectory.GetType() != this.GetType())
                 throw new ArgumentException("targetDirectory must be of same type");
 
+            bool tryAgain = false;
             try
             {
                 var targetPath = Path.Combine(targetDirectory.FullName, newFilename ?? _file.Name);
@@ -137,36 +138,43 @@ namespace PhotoOrganizer.LocalFileSystem
                 {
                     case -2147024816:   // File already exists
                     case -2147024713:
-                        switch (fileExistsBehavior)
-                        {
-                            case ExistingFileMode.Ignore:
-                                Console.WriteLine("Skipping file (already exists): {0}", this.FullName);
-                                break;
-                            case ExistingFileMode.Rename:
-                                this.CopyTo(targetDirectory, fileExistsBehavior, GenerateUniqueFilename(targetDirectory));
-                                break;
-                            case ExistingFileMode.DeleteSourceFileWhenIdentical:
-                                Console.WriteLine("Deleting source file (target already exists): {0}", this.FullName);
-                                var destinationFile = targetDirectory.GetFile(this.Name);
-                                if (this.IsFileIdentical(destinationFile))
-                                {
-                                    this.Delete();
-                                }
-                                break;
-                        }
+                        tryAgain = true;
                         break;
                     default:
                         Console.WriteLine("File skipped (IOException: {0}): {1}\r\n{2}", ioex.HResult, _file.Name, ioex.Message);
                         break;
                 }
             }
+
+            if (tryAgain)
+            {
+                switch (fileExistsBehavior)
+                {
+                    case ExistingFileMode.Ignore:
+                        Console.WriteLine("Skipping file (already exists): {0}", this.FullName);
+                        break;
+                    case ExistingFileMode.Rename:
+                        var newfilename = await GenerateUniqueFilenameAsync(targetDirectory);
+                        await this.CopyToAsync(targetDirectory, fileExistsBehavior, newfilename);
+                        break;
+                    case ExistingFileMode.DeleteSourceFileWhenIdentical:
+                        Console.WriteLine("Deleting source file (target already exists): {0}", this.FullName);
+                        var destinationFile = await targetDirectory.GetFileAsync(this.Name);
+                        if (this.IsFileIdentical(destinationFile))
+                        {
+                            await this.DeleteAsync();
+                        }
+                        break;
+                }
+            }
         }
 
-        public void MoveTo(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort, string newFilename = null)
+        public async Task MoveToAsync(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort, string newFilename = null)
         {
             if (targetDirectory.GetType() != this.GetType())
                 throw new ArgumentException("targetDirectory must be of same type");
 
+            bool tryAgain = false;
             try
             {
                 var targetPath = Path.Combine(targetDirectory.FullName, newFilename ?? _file.Name);
@@ -178,32 +186,38 @@ namespace PhotoOrganizer.LocalFileSystem
                 {
                     case -2147024816:   // File already exists
                     case -2147024713:
-                        switch (fileExistsBehavior)
-                        {
-                            case ExistingFileMode.Ignore:
-                                Console.WriteLine("Skipping file (already exists): {0}", this.FullName);
-                                break;
-                            case ExistingFileMode.Rename:
-                                this.MoveTo(targetDirectory, fileExistsBehavior, GenerateUniqueFilename(targetDirectory));
-                                break;
-                            case ExistingFileMode.DeleteSourceFileWhenIdentical:
-                                Console.WriteLine("Deleting source file (target already exists): {0}", this.FullName);
-                                var destinationFile = targetDirectory.GetFile(this.Name);
-                                if (this.IsFileIdentical(destinationFile))
-                                {
-                                    this.Delete();
-                                }
-                                break;
-                        }
+                        tryAgain = true;
                         break;
                     default:
                         Console.WriteLine("File skipped (IOException: {0}): {1}\r\n{2}", ioex.HResult, _file.Name, ioex.Message);
                         break;
                 }
             }
+
+            if (tryAgain)
+            {
+                switch (fileExistsBehavior)
+                {
+                    case ExistingFileMode.Ignore:
+                        Console.WriteLine("Skipping file (already exists): {0}", this.FullName);
+                        break;
+                    case ExistingFileMode.Rename:
+                        var newfilename = await GenerateUniqueFilenameAsync(targetDirectory);
+                        await this.MoveToAsync(targetDirectory, fileExistsBehavior, newfilename);
+                        break;
+                    case ExistingFileMode.DeleteSourceFileWhenIdentical:
+                        Console.WriteLine("Deleting source file (target already exists): {0}", this.FullName);
+                        var destinationFile = await targetDirectory.GetFileAsync(this.Name);
+                        if (this.IsFileIdentical(destinationFile))
+                        {
+                            await this.DeleteAsync();
+                        }
+                        break;
+                }
+            }
         }
 
-        public void Delete()
+        public async Task DeleteAsync()
         {
             _file.Delete();
         }
@@ -216,7 +230,7 @@ namespace PhotoOrganizer.LocalFileSystem
         public bool Exists { get { return _file.Exists; } }
 
 
-        public void CopyTo(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort)
+        public async Task CopyToAsync(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort)
         {
             throw new NotImplementedException();
         }

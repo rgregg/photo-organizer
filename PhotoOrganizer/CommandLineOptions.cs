@@ -9,11 +9,16 @@ namespace PhotoOrganizer
 {
     public class CommandLineOptions
     {
-        [Option('d', "destination", HelpText="Parent directory where files should be moved", Required=true)]
+        
+
+        [Option('d', "destination", HelpText="Parent directory where files should be organized", Required=true)]
         public string DestinationFolder { get; set; }
 
         [Option('s', "source", HelpText="Source folder to reader from")]
         public string SourceFolder { get; set; }
+
+        [Option("service", DefaultValue=SupportedServices.LocalFileSystem, HelpText="Specify the target service to use: LocalFileSystem, OneDrive")]
+        public SupportedServices TargetService { get; set; } 
 
         [Option("video", HelpText = "Enable oranizing videos", DefaultValue=false)]
         public bool ActOnVideos { get; set; }
@@ -30,17 +35,8 @@ namespace PhotoOrganizer
         [Option("copy", HelpText="Copy files to the destination instead of moving them")]
         public bool CopyInsteadOfMove { get; set; }
 
-        [Option("rename", HelpText="Rename when an existing file is encountered", MutuallyExclusiveSet="existBehavior")]
-        public bool RenameOnExistingFile { get; set; }
-
-        [Option("overwrite", HelpText = "Overwrite when an existing file is encountered", MutuallyExclusiveSet = "existBehavior")]
-        public bool OverwriteOnExistingFile { get; set; }
-
-        [Option("delete", HelpText = "Delete the source file when the same file already exists in the destination", MutuallyExclusiveSet = "existBehavior")]
-        public bool DeleteSourceOnExistingFile { get; set; }
-
-        [Option("verify-delete", HelpText="Before deleting source file, verify it is identical with the destination", DefaultValue = false)]
-        public bool VerifyFilesAreIdentical { get; set; }
+        [Option("existing-file", HelpText="Control the behavior when a file already exists in the destination folder. Values: Abort, Ignore, Rename, Overwrite, DeleteSourceFileWhenIdentical")]
+        public ExistingFileMode ExistingFileBehavior { get; set; }
 
         [Option("parallel", HelpText="Perform the file operations in parallel")]
         public bool RunInParallel { get; set; }
@@ -54,20 +50,15 @@ namespace PhotoOrganizer
         [Option('r', "recursive", HelpText="Recurse through subfolders of the source folder")]
         public bool Recursive { get; set; }
 
-        internal ExistingFileMode ExistingFileBehavior
-        {
-            get
-            {
-                if (RenameOnExistingFile)
-                    return ExistingFileMode.Rename;
-                else if (OverwriteOnExistingFile)
-                    return ExistingFileMode.Overwrite;
-                else if (DeleteSourceOnExistingFile)
-                    return ExistingFileMode.DeleteSourceFileWhenIdentical;
-                else
-                    return ExistingFileMode.Ignore;
-            }
-        }
+        [Option("access-token", HelpText="Provide an access token for using networked services")]
+        public string AccessToken { get; set; }
+
+    }
+
+    public enum SupportedServices
+    {
+        LocalFileSystem,
+        OneDrive
     }
 
     

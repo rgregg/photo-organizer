@@ -21,14 +21,14 @@ namespace PhotoOrganizer.LocalFileSystem
             _directory = new DirectoryInfo(path);
         }
 
-        public IEnumerable<IFile> EnumerateFiles()
+        public async Task<IEnumerable<IFile>> EnumerateFilesAsync()
         {
             var items = from p in _directory.EnumerateFiles()
                         select new LocalFile(p);
             return items;
         }
 
-        public IEnumerable<IDirectory> EnumerateDirectories()
+        public async Task<IEnumerable<IDirectory>> EnumerateDirectoriesAsync()
         {
             var items = from d in _directory.EnumerateDirectories()
                         select new LocalDirectory(d);
@@ -45,18 +45,18 @@ namespace PhotoOrganizer.LocalFileSystem
             get { return _directory.Name; }
         }
 
-        public IDirectory GetChildDirectory(string childDirectoryName)
+        public async Task<IDirectory> GetChildDirectoryAsync(string childDirectoryName)
         {
             var childPath = Path.Combine(_directory.FullName, childDirectoryName);
             return new LocalDirectory(new DirectoryInfo(childPath));
         }
 
-        public void Create()
+        public async Task CreateAsync()
         {
             _directory.Create();
         }
 
-        public IFile GetFile(string filename)
+        public async Task<IFile> GetFileAsync(string filename)
         {
             var filePath = Path.Combine(_directory.FullName, filename);
             return new LocalFile(new FileInfo(filePath));

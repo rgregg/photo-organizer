@@ -23,38 +23,37 @@ namespace PhotoOrganizer
             this.Options = opts;
         }
 
-
-        public void ProcessSourceFolder(IDirectory source)
+        public async Task ProcessSourceFolderAsync(IDirectory source)
         {
             if (Options.VerboseOutput)
                 Console.WriteLine("Process source folder {0}.", source.FullName);
 
-            var files = source.EnumerateFiles();
+            var files = await source.EnumerateFilesAsync();
             if (this.Options.RunInParallel)
             {
-                Parallel.ForEach(files, file => ProcessFile(file));
+                files.ForEachAsync(4, async file => await ProcessFileAsync(file));
             }
             else
             {
                 DateTimeOffset? previousDateTime = null;
                 foreach (var file in files)
                 {
-                    previousDateTime = ProcessFile(file, previousDateTime);
+                    previousDateTime = await ProcessFileAsync(file, previousDateTime);
                 }
             }
 
             if (this.Options.Recursive)
             {
-                var folders = source.EnumerateDirectories();
+                var folders = await source.EnumerateDirectoriesAsync();
                 if (Options.RunInParallel)
                 {
-                    Parallel.ForEach(folders, folder => ProcessSourceFolder(folder));
+                    Parallel.ForEach(folders, async (folder) => await ProcessSourceFolderAsync(folder));
                 }
                 else
                 {
                     foreach (var folder in folders) 
                     { 
-                        ProcessSourceFolder(folder); 
+                        await ProcessSourceFolderAsync(folder); 
                     }
                 }
             }
@@ -67,7 +66,7 @@ namespace PhotoOrganizer
         /// <param name="file"></param>
         /// <param name="suggestion"></param>
         /// <returns>The dateTaken value of this photo or video, if available.</returns>
-        private DateTimeOffset? ProcessFile(IFile file, DateTimeOffset? suggestion = null)
+        private async Task<DateTimeOffset?> ProcessFileAsync(IFile file, DateTimeOffset? suggestion = null)
         {
             bool moveThisFile = (this.Options.ActOnImages && file.PerceivedType == DetailFileInfo.PerceivedFileType.Image) ||
                                 (this.Options.ActOnVideos && file.PerceivedType == DetailFileInfo.PerceivedFileType.Video);
@@ -80,10 +79,18 @@ namespace PhotoOrganizer
                 dateTaken = suggestion;
             }
 
-            if (moveThisFile && dateTaken.HasValue)
+            if (moveThisFile)
             {
-                string targetFullName = dateTaken.Value.ToString(Options.DirectoryFormat);
-                IDirectory targetDirectory = this.Destination.GetChildDirectory(targetFullName);
+                string targetFullName = null;
+                if (dateTaken.HasValue)
+                {
+                    targetFullName = dateTaken.Value.ToString(Options.DirectoryFormat);
+                }
+                else
+                {
+                    targetFullName = "No date";
+                }
+                IDirectory targetDirectory = await this.Destination.GetChildDirectoryAsync(targetFullName);
 
                 if (this.Options.VerboseOutput)
                     Console.WriteLine("Moving {0} to {1}", file.Name, targetDirectory.FullName);
@@ -92,8 +99,8 @@ namespace PhotoOrganizer
                 {
                     try
                     {
-                        targetDirectory.Create();
-                        PushFileToTarget(file, targetDirectory, this.Options.ExistingFileBehavior);
+                        await targetDirectory.CreateAsync();
+                        await PushFileToTarget(file, targetDirectory, this.Options.ExistingFileBehavior);
                     }
                     catch (Exception ex)
                     {
@@ -119,15 +126,15 @@ namespace PhotoOrganizer
                 Console.WriteLine(message);
         }
        
-        private void PushFileToTarget(IFile file, IDirectory targetPath, ExistingFileMode fileExistsBehavior)
+        private async Task PushFileToTarget(IFile file, IDirectory targetPath, ExistingFileMode fileExistsBehavior)
         {
             if (this.Options.CopyInsteadOfMove)
             {
-                file.CopyTo(targetPath, fileExistsBehavior);
+                await file.CopyToAsync(targetPath, fileExistsBehavior);
             }
             else
             {
-                file.MoveTo(targetPath, fileExistsBehavior);
+                await file.MoveToAsync(targetPath, fileExistsBehavior);
             }
         }
 

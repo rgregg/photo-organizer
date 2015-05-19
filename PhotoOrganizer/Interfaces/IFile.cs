@@ -10,9 +10,9 @@ namespace PhotoOrganizer
     {
         long Length { get; }
 
-        void CopyTo(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort);
-        void MoveTo(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort, string newFileName = null);
-        void Delete();
+        Task CopyToAsync(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort);
+        Task MoveToAsync(IDirectory targetDirectory, ExistingFileMode fileExistsBehavior = ExistingFileMode.Abort, string newFileName = null);
+        Task DeleteAsync();
 
 
         DateTimeOffset DateTimeLastModified { get; }

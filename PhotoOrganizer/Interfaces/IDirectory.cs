@@ -8,21 +8,21 @@ namespace PhotoOrganizer
 {
     public interface IDirectory : IFileSystemItem
     {
-        IEnumerable<IFile> EnumerateFiles();
-        IEnumerable<IDirectory> EnumerateDirectories();
+        Task<IEnumerable<IFile>> EnumerateFilesAsync();
+        Task<IEnumerable<IDirectory>> EnumerateDirectoriesAsync();
 
         /// <summary>
         /// Returns a reference to a particular descendent folder by name
         /// </summary>
         /// <param name="childDirectoryName"></param>
         /// <returns></returns>
-        IDirectory GetChildDirectory(string childDirectoryName);
+        Task<IDirectory> GetChildDirectoryAsync(string childDirectoryName);
 
         /// <summary>
         /// Creates the directory if necessary
         /// </summary>
-        void Create();
+        Task CreateAsync();
 
-        IFile GetFile(string filename);
+        Task<IFile> GetFileAsync(string filename);
     }
 }

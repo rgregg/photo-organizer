@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using OneDrive;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,46 +10,140 @@ namespace PhotoOrganizer.OneDriveFileSystem
 {
     class OneDriveDirectory : IDirectory
     {
-        public static OneDrive.ODConnection Connection {get; set;}
+        private OneDrive.ODConnection _connection;
+        private OneDrive.ODItemReference _itemReference;
 
-        public IEnumerable<IFile> EnumerateFiles()
+        private List<OneDrive.ODItem> _contents = new List<OneDrive.ODItem>();
+
+        public OneDriveDirectory(OneDrive.ODConnection connection, string path)
         {
-            throw new NotImplementedException();
+            _connection = connection;
+            _itemReference = OneDrive.ODConnection.ItemReferenceForDrivePath(path);
+
+            FullName = path;
+            Name = System.IO.Path.GetDirectoryName(path);
         }
 
-        public IEnumerable<IDirectory> EnumerateDirectories()
+        public OneDriveDirectory(ODConnection connection, ODItem item)
         {
-            throw new NotImplementedException();
+            _connection = connection;
+            _itemReference = item.ItemReference();
+
+            FullName = item.Path(false);
+            Name = item.Name;
         }
 
-        public IDirectory GetChildDirectory(string childDirectoryName)
+        public OneDriveDirectory(ODConnection connection, ODItemReference itemRef)
         {
-            throw new NotImplementedException();
+            _connection = connection;
+            _itemReference = itemRef;
+
+            Task<ODItemReference> task = OneDriveFile.CollapseItemReferenceAsync(itemRef);
+            task.Wait();
+            var newItemRef = task.Result;
+            FullName = newItemRef.Path;
         }
 
-        public void Create()
+        public ODItemReference ItemReference { get { return _itemReference; } }
+
+        private async Task DownloadFolderContents()
         {
-            throw new NotImplementedException();
+            if (_contents.Any())
+                return;
+
+            Console.WriteLine("Downloading folder contents from OneDrive...");
+            var options = new ChildrenRetrievalOptions { SelectProperties = "id,name,size,lastModifiedDateTime,file,folder,photo,video,image".Split(','), PageSize = 500 };
+
+            ODItemCollection children = await _connection.GetChildrenOfItemAsync(_itemReference, options);
+            _contents.AddRange(children.Collection);
+
+            while (children.MoreItemsAvailable())
+            {
+                Console.WriteLine("{0} items found.", _contents.Count);
+                children = await children.GetNextPage(_connection);
+                _contents.AddRange(children.Collection);
+            }
+            Console.WriteLine("{0} items found.", _contents.Count);
         }
 
-        public IFile GetFile(string filename)
+        public async Task<IEnumerable<IFile>> EnumerateFilesAsync()
         {
-            throw new NotImplementedException();
+            await DownloadFolderContents();
+            return (from item in _contents where item.File != null select new OneDriveFile(_connection, item));
+        }
+
+        public async Task<IEnumerable<IDirectory>> EnumerateDirectoriesAsync()
+        {
+            await DownloadFolderContents();
+            return (from item in _contents where item.Folder != null select new OneDriveDirectory(_connection, item));
+        }
+
+        private Dictionary<string, OneDriveDirectory> _directoryCache = new Dictionary<string, OneDriveDirectory>();
+
+        public async Task<IDirectory> GetChildDirectoryAsync(string childDirectoryName)
+        {
+            childDirectoryName = childDirectoryName.Replace(@"\", "/");
+
+            OneDriveDirectory childDirectory;
+            if (_directoryCache.TryGetValue(childDirectoryName, out childDirectory))
+                return childDirectory;
+            else
+            {
+                var dirRef = _itemReference.AddPathComponent(childDirectoryName);
+                childDirectory = new OneDriveDirectory(_connection, _itemReference.AddPathComponent(childDirectoryName));
+                _directoryCache[childDirectoryName] = childDirectory;
+                return childDirectory;
+            }
+        }
+
+        private readonly AsyncSemaphore _createLock = new AsyncSemaphore(1);
+
+        public async Task CreateAsync()
+        {
+            await _createLock.WaitAsync();
+
+            if (!string.IsNullOrEmpty(_itemReference.Id))
+            {
+                return;
+            }
+
+            try
+            {
+                var item = await _connection.PatchItemAsync(_itemReference, new ODItem { Folder = new OneDrive.Facets.FolderFacet() });
+                _itemReference = item.ItemReference();
+            }
+            catch (ODException ex)
+            {
+                Console.WriteLine("Error while creating folder: {0}", ex.Message);
+            }
+            finally
+            {
+                _createLock.Release();
+            }
+        }
+
+        public async Task<IFile> GetFileAsync(string filename)
+        {
+            var itemRef = _itemReference.AddPathComponent(filename);
+            var item = await _connection.GetItemAsync(itemRef, ItemRetrievalOptions.Default);
+            return new OneDriveFile(_connection, item);
         }
 
         public string FullName
         {
-            get { throw new NotImplementedException(); }
+            get;
+            private set;
         }
 
         public string Name
         {
-            get { throw new NotImplementedException(); }
+            get;
+            private set;
         }
 
         public bool Exists
         {
-            get { throw new NotImplementedException(); }
+            get { return true; }
         }
     }
 }
