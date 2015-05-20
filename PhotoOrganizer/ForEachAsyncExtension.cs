@@ -17,7 +17,14 @@ namespace PhotoOrganizer
                 {
                     using (partition)
                         while (partition.MoveNext())
-                            await body(partition.Current);
+                            try
+                            {
+                                await body(partition.Current);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Error during ForEachAsync: {0}", ex.Message);
+                            }
                 }));
         }
 

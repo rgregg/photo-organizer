@@ -80,6 +80,8 @@ namespace PhotoOrganizer.OneDriveFileSystem
 
         private Dictionary<string, OneDriveDirectory> _directoryCache = new Dictionary<string, OneDriveDirectory>();
 
+        private readonly Nito.AsyncEx.AsyncSemaphore _directoryCacheLock = new AsyncSemaphore(1);
+
         public async Task<IDirectory> GetChildDirectoryAsync(string childDirectoryName)
         {
             childDirectoryName = childDirectoryName.Replace(@"\", "/");
@@ -89,9 +91,13 @@ namespace PhotoOrganizer.OneDriveFileSystem
                 return childDirectory;
             else
             {
+                //await _directoryCacheLock.WaitAsync();
+                
                 var dirRef = _itemReference.AddPathComponent(childDirectoryName);
                 childDirectory = new OneDriveDirectory(_connection, _itemReference.AddPathComponent(childDirectoryName));
                 _directoryCache[childDirectoryName] = childDirectory;
+                
+                //_directoryCacheLock.Release();
                 return childDirectory;
             }
         }

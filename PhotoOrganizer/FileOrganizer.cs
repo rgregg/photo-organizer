@@ -31,14 +31,14 @@ namespace PhotoOrganizer
             var files = await source.EnumerateFilesAsync();
             if (this.Options.RunInParallel)
             {
-                files.ForEachAsync(4, async file => await ProcessFileAsync(file));
+                await files.ForEachAsync(4, async file => await ProcessFileAsync(file));
             }
             else
             {
-                DateTimeOffset? previousDateTime = null;
-                foreach (var file in files)
+                var filesToProcess = files.ToArray();
+                foreach (var file in filesToProcess)
                 {
-                    previousDateTime = await ProcessFileAsync(file, previousDateTime);
+                    await ProcessFileAsync(file, null);
                 }
             }
 
