@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using CommandLine.Text;
+using RyanGregg.Extensions;
 
 namespace PhotoOrganizer
 {
@@ -12,6 +13,8 @@ namespace PhotoOrganizer
     {
         static int Main(string[] args)
         {
+            Console.WriteLine("PhotoOrganizer {0}", args.ComponentsJoinedByString(" "));
+
             var opts = new CommandLineOptions();
             if (!CommandLine.Parser.Default.ParseArguments(args, opts))
             {
@@ -22,7 +25,6 @@ namespace PhotoOrganizer
             if (string.IsNullOrEmpty(opts.SourceFolder))
                 opts.SourceFolder = System.Environment.CurrentDirectory;
 
-
             IDirectory destination = GetDirectory(opts, opts.DestinationFolder);
             IDirectory source = GetDirectory(opts, opts.SourceFolder);
 
@@ -31,11 +33,19 @@ namespace PhotoOrganizer
                 Console.WriteLine("Error: Destination folder doesn't exist.");
                 return 2;
             }
+            else
+            {
+                Console.WriteLine("Destination: " + destination.FullName);
+            }
 
             if (!source.Exists)
             {
                 Console.WriteLine("Error: Source folder doesn't exist. Nothing to do.");
                 return 3;
+            }
+            else
+            {
+                Console.WriteLine("Source: " + source.FullName);
             }
 
             if (opts.ExistingFileBehavior == ExistingFileMode.DeleteSourceFileWhenIdentical)
@@ -45,6 +55,13 @@ namespace PhotoOrganizer
                 if (!(key.KeyChar == 'y' || key.KeyChar == 'Y'))
                     return 4;
                 Console.WriteLine();
+            }
+
+
+            if (opts.TargetService != SupportedServices.LocalFileSystem && string.IsNullOrEmpty(opts.AccessToken))
+            {
+                Console.Write("Enter an access token for {0}: ", opts.TargetService);
+                opts.AccessToken = Console.ReadLine();
             }
 
             FileOrganizer organizer = new FileOrganizer(destination, opts);

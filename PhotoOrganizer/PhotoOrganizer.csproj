@@ -92,6 +92,7 @@
     <Compile Include="CFileInfo.cs" />
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="EnumExtensions.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FileOrganizer.cs" />
     <Compile Include="ForEachAsyncExtension.cs" />
     <Compile Include="Interfaces\FileExtensionMethods.cs" />
