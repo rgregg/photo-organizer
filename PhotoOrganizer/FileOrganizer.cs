@@ -71,6 +71,7 @@ namespace PhotoOrganizer
             bool moveThisFile = (this.Options.ActOnImages && file.PerceivedType == DetailFileInfo.PerceivedFileType.Image) ||
                                 (this.Options.ActOnVideos && file.PerceivedType == DetailFileInfo.PerceivedFileType.Video);
 
+            Console.WriteLine("File: {0}... move: {1}", file.Name, moveThisFile);
             DateTimeOffset? dateTaken = file.DateTaken;
             if (!dateTaken.HasValue && file.PerceivedType == DetailFileInfo.PerceivedFileType.Video 
                 && this.Options.InferVideoDate && suggestion.HasValue)
@@ -100,7 +101,9 @@ namespace PhotoOrganizer
                     try
                     {
                         await targetDirectory.CreateAsync();
+                        Console.WriteLine("targetDirectory.createdAsync complete");
                         await PushFileToTarget(file, targetDirectory, this.Options.ExistingFileBehavior);
+                        Console.WriteLine("File moved.");
                     }
                     catch (Exception ex)
                     {

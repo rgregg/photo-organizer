@@ -65,9 +65,8 @@
       <HintPath>..\packages\Nito.AsyncEx.3.0.0\lib\net45\Nito.AsyncEx.Enlightenment.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OneDriveSDK, Version=1.0.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\onedrive-explorer-win\OneDriveSDK\bin\Debug\OneDriveSDK.dll</HintPath>
+    <Reference Include="OneDriveSDK">
+      <HintPath>..\packages\Microsoft.OneDrive.SampleCodeSDK.1.0.11.0\lib\portable-net45+win+wpa81+wp80\OneDriveSDK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

@@ -60,7 +60,7 @@ namespace PhotoOrganizer
 
             if (opts.TargetService != SupportedServices.LocalFileSystem && string.IsNullOrEmpty(opts.AccessToken))
             {
-                Console.Write("Enter an access token for {0}: ", opts.TargetService);
+                Console.WriteLine("Enter an access token for {0}: ", opts.TargetService);
                 opts.AccessToken = Console.ReadLine();
             }
 

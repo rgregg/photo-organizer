@@ -106,12 +106,13 @@ namespace PhotoOrganizer.OneDriveFileSystem
 
         public async Task CreateAsync()
         {
-            await _createLock.WaitAsync();
-
             if (!string.IsNullOrEmpty(_itemReference.Id))
             {
                 return;
             }
+
+            await _createLock.WaitAsync();
+
 
             try
             {

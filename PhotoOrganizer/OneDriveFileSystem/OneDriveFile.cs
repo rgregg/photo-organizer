@@ -94,7 +94,16 @@ namespace PhotoOrganizer.OneDriveFileSystem
             catch (ODException ex)
             {
                 // TODO: handle the abort/ignore/delete cases
-                Console.WriteLine("Error moving {0}: {1}", this.Name, ex.Message);
+                if (ex is ODServerException)
+                {
+                    var exp = (ODServerException)ex;
+                    Console.WriteLine("Error moving {0}: {1} [{2}]", this.Name, exp.ServiceError.Message, exp.ServiceError.Code);
+                }
+                else
+                {
+                    Console.WriteLine("Error moving {0}: {1}", this.Name, ex.Message);
+                }
+                
             }
         }
 
