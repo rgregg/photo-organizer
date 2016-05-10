@@ -12,62 +12,29 @@ namespace PhotoOrganizer
         [Option('d', "destination", HelpText="Parent directory where files should be moved", Required=true)]
         public string DestinationFolder { get; set; }
 
-        [Option('s', "source", HelpText="Source folder to reader from")]
+        [Option('s', "source", HelpText="Source folder path")]
         public string SourceFolder { get; set; }
 
-        [Option("video", HelpText = "Enable oranizing videos", DefaultValue=false)]
-        public bool ActOnVideos { get; set; }
-
-        [Option("images", HelpText = "Enable organizing pictures", DefaultValue = true)]
-        public bool ActOnImages { get; set; }
-
-        [Option("verbose", HelpText="Output verbose logging")]
+        [Option("verbose", HelpText="Verbose console output")]
         public bool VerboseOutput { get; set; }
 
-        [Option("simulate", HelpText="Simulate the move, without actually moving files")]
+        [Option("simulate", HelpText="Simulate the action, without actually moving files")]
         public bool Simulate { get; set; }
 
-        [Option("copy", HelpText="Copy files to the destination instead of moving them")]
+        [Option("copy", HelpText="Copy files to the destination and leave them in the source folder.")]
         public bool CopyInsteadOfMove { get; set; }
 
-        [Option("rename", HelpText="Rename when an existing file is encountered", MutuallyExclusiveSet="existBehavior")]
-        public bool RenameOnExistingFile { get; set; }
-
-        [Option("overwrite", HelpText = "Overwrite when an existing file is encountered", MutuallyExclusiveSet = "existBehavior")]
-        public bool OverwriteOnExistingFile { get; set; }
-
-        [Option("delete", HelpText = "Delete the source file when the same file already exists in the destination", MutuallyExclusiveSet = "existBehavior")]
-        public bool DeleteSourceOnExistingFile { get; set; }
-
-        [Option("verify-delete", HelpText="Before deleting source file, verify it is identical with the destination", DefaultValue = false)]
-        public bool VerifyFilesAreIdentical { get; set; }
+        [Option("conflict", HelpText = "Define the conflict behavior. Options are skip, rename, overwrite, or delete (the source file).")]
+        public ExistingFileMode ConflictBehavior { get; set; }
 
         [Option("parallel", HelpText="Perform the file operations in parallel")]
         public bool RunInParallel { get; set; }
 
-        [Option("infer-video-date", HelpText="Infer the date a video was recorded based on the images before it (not compatible with parallel mode.")]
-        public bool InferVideoDate { get; set; }
-
         [Option("dest-format", HelpText = "Destination folder format. Uses the DateTime formatting syntax.", DefaultValue = "yyyy\\\\yyyy-MM-MMMM")]
         public string DirectoryFormat { get; set; }
 
-        [Option('r', "recursive", HelpText="Recurse through subfolders of the source folder")]
+        [Option('r', "recursive", HelpText="Recurse through subfolders of the source folder", DefaultValue=true)]
         public bool Recursive { get; set; }
-
-        internal ExistingFileMode ExistingFileBehavior
-        {
-            get
-            {
-                if (RenameOnExistingFile)
-                    return ExistingFileMode.Rename;
-                else if (OverwriteOnExistingFile)
-                    return ExistingFileMode.Overwrite;
-                else if (DeleteSourceOnExistingFile)
-                    return ExistingFileMode.DeleteSourceFile;
-                else
-                    return ExistingFileMode.Skip;
-            }
-        }
     }
 
     public enum ExistingFileMode
@@ -75,6 +42,6 @@ namespace PhotoOrganizer
         Skip,
         Rename,
         Overwrite,
-        DeleteSourceFile
+        Delete
     }
 }

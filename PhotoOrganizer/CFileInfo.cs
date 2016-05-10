@@ -1,37 +1,36 @@
-﻿using System;
+﻿#if WIN32
+
+using System;
 using System.Text;
 using System.IO;
 using Shell32;
 using System.Collections;
 
-namespace DetailFileInfo
+namespace PhotoOrganizer
 {
     /// <summary> 
     /// Returns the detailed Information of a given file. 
     /// </summary> 
-    public class CFileInfo
+    public class CFileInfo : IFileInfo
     {
-
-        
-
         public CFileInfo(string sFPath, FileAttributes[] desiredAttributes = null)
         {
 
             // check if the given File exists 
             if (File.Exists(sFPath))
-            {
+            { 
 
                 ArrayList aDetailedInfo = new ArrayList();
 
                 FileInfo oFInfo = new FileInfo(sFPath);
 
-                FileName = oFInfo.Name;
+                Filename = oFInfo.Name;
                 FullFileName = oFInfo.FullName;
                 FileExtension = oFInfo.Extension;
                 FileSize = oFInfo.Length;
-                FilePath = oFInfo.Directory.ToString();
-                FileCreationDate = oFInfo.CreationTime;
-                FileModificationDate = oFInfo.LastWriteTime;
+                Path = oFInfo.Directory.ToString();
+                Created = oFInfo.CreationTime;
+                LastModified = oFInfo.LastWriteTime;
 
                 #region "read File Details"
 
@@ -60,7 +59,7 @@ namespace DetailFileInfo
                             FileComment = oDFI.Value;
                             break;
                         case FileAttributes.DateTaken:
-                            DateTaken = ParseDate(oDFI.Value);
+                            Taken = ParseDate(oDFI.Value);
                             break;
                         case FileAttributes.PerceivedType:
                             PerceivedType = ParsePerceivedFileType(oDFI.Value);
@@ -89,7 +88,7 @@ namespace DetailFileInfo
 
         }
 
-        private DateTime? ParseDate(string p)
+        private DateTimeOffset? ParseDate(string p)
         {
             if (string.IsNullOrWhiteSpace(p))
                 return null;
@@ -106,14 +105,14 @@ namespace DetailFileInfo
             return null;
         }
 
-        private PerceivedFileType ParsePerceivedFileType(string p)
+        private MediaType ParsePerceivedFileType(string p)
         {
-            PerceivedFileType output;
-            if (Enum.TryParse<PerceivedFileType>(p, out output))
+            MediaType output;
+            if (Enum.TryParse<MediaType>(p, out output))
                 return output;
 
             Console.WriteLine("Unknown perceived format: " + p);
-            return PerceivedFileType.Unspecified;
+            return MediaType.Unknown;
         }
 
         private string CleanOrderMarks(string input)
@@ -130,22 +129,13 @@ namespace DetailFileInfo
 
 
         #region "Properties"
-        public string FileName { get; private set; }
-        public string FilePath { get; private set; }
-        public string FullFileName { get; private set; }
-        public string FileExtension { get; private set; }
-        public long FileSize { get; private set; }
-        public DateTime FileCreationDate { get; private set; }
-        public DateTime FileModificationDate { get; private set; }
-        public string FileType { get; private set; }
-        public string FileTitle { get; private set; }
-        public string FileSubject { get; private set; }
-        public string FileAuthor { get; private set; }
-        public string FileCategory { get; private set; }
-        public string FileComment { get; private set; }
+        public string Filename { get; private set; }
+        public string Path { get; private set; }
+        public DateTime Created { get; private set; }
+        public DateTime LastModified { get; private set; }
 
-        public DateTime? DateTaken { get; set; }
-        public PerceivedFileType PerceivedType { get; set; }
+        public DateTime? Taken { get; set; }
+        public MediaType Type { get; set; }
         public string CameraModel { get; set; }
         public string CameraMake { get; set; }
 
@@ -300,10 +290,6 @@ namespace DetailFileInfo
         WhiteBalance = 250,
         Priority = 251
     }
-    public enum PerceivedFileType
-    {
-        Unspecified,
-        Image,
-        Video,
-    }
 }
+
+#endif

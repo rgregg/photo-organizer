@@ -36,7 +36,7 @@ namespace PhotoOrganizer
             }
             else
             {
-                DateTime? previousDateTime = null;
+                DateTimeOffset? previousDateTime = null;
                 foreach (var file in files)
                 {
                     previousDateTime = ProcessFile(file, previousDateTime);
@@ -60,19 +60,16 @@ namespace PhotoOrganizer
             }
         }
 
-        private DateTime? ProcessFile(FileInfo file, DateTime? suggestion = null)
+        private DateTimeOffset? ProcessFile(FileInfo file, DateTimeOffset? suggestion = null)
         {
-            var attributes = new DetailFileInfo.FileAttributes[] { DetailFileInfo.FileAttributes.PerceivedType, DetailFileInfo.FileAttributes.DateTaken, 
-                    DetailFileInfo.FileAttributes.CameraMaker, DetailFileInfo.FileAttributes.CameraModel };
+            IMediaInfo info = MediaInfoFactory.GetMediaInfo(file);
+            Console.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", file.Name, info.Type, info.Taken, info.CameraMake, info.CameraModel);
 
-            DetailFileInfo.CFileInfo info = new DetailFileInfo.CFileInfo(file.FullName, attributes);
-            Console.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", file.Name, info.PerceivedType, info.DateTaken, info.CameraMake, info.CameraModel);
 
-            bool moveThisFile = (this.Options.ActOnImages && info.PerceivedType == DetailFileInfo.PerceivedFileType.Image) ||
-                                (this.Options.ActOnVideos && info.PerceivedType == DetailFileInfo.PerceivedFileType.Video);
+            bool moveThisFile = info.Type == MediaType.Image || info.Type == MediaType.Video;
 
-            DateTime? dateTaken = info.DateTaken;
-            if (!dateTaken.HasValue && info.PerceivedType == DetailFileInfo.PerceivedFileType.Video && this.Options.InferVideoDate && suggestion.HasValue)
+            DateTimeOffset? dateTaken = info.Taken;
+            if (!dateTaken.HasValue && info.Type == MediaType.Video && suggestion.HasValue)
             {
                 if (this.Options.VerboseOutput) Console.WriteLine("Infering date for {0} as {1}", file.Name, suggestion);
                 dateTaken = suggestion;
@@ -115,11 +112,11 @@ namespace PhotoOrganizer
             }
             else if (this.Options.VerboseOutput && moveThisFile)
             {
-                Console.WriteLine("Skipping file (no date taken): " + info.FileName);
+                Console.WriteLine("Skipping file (no date taken): " + info.Filename);
             }
             else if (this.Options.VerboseOutput)
             {
-                Console.WriteLine("Skipping file (not included type): " + info.FileName);
+                Console.WriteLine("Skipping file (not included type): " + info.Filename);
             }
 
             return dateTaken;
@@ -170,7 +167,7 @@ namespace PhotoOrganizer
 
         private void FileAlreadyExists(FileInfo sourceFile, string targetPath)
         {
-            switch (Options.ExistingFileBehavior)
+            switch (Options.ConflictBehavior)
             {
                 case ExistingFileMode.Skip:
                     {
@@ -204,12 +201,16 @@ namespace PhotoOrganizer
                         DoFileAction(sourceFile, renamedTargetPath);
                         break;
                     }
-                case ExistingFileMode.DeleteSourceFile:
+                case ExistingFileMode.Delete:
                     {
-                        if (!Options.VerifyFilesAreIdentical || FilesAreIdentifical(sourceFile, new FileInfo(targetPath)))
+                        if (FilesAreIdentifical(sourceFile, new FileInfo(targetPath)))
                         {
                             VerboseLog("File already exists: deleting source file.");
                             sourceFile.Delete();
+                        }
+                        else
+                        {
+                            VerboseLog("Files were not identical, so the original was not deleted.");
                         }
                         break;
                     }
