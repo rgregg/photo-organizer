@@ -1,4 +1,4 @@
-﻿#if WIN32
+﻿#if FALSE
 
 using System;
 using System.Text;
