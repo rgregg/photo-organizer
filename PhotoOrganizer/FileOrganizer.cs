@@ -81,7 +81,17 @@ namespace PhotoOrganizer
                 DirectoryInfo targetDirectory = new DirectoryInfo(Path.Combine(this.Destination.FullName, targetFullName));
                 string targetPath = Path.Combine(targetDirectory.FullName, file.Name);
 
-                if (this.Options.VerboseOutput) Console.WriteLine("Moving {0} to {1}", file.Name, targetPath);
+                if (this.Options.VerboseOutput)
+                {
+                    if (this.Options.CopyInsteadOfMove)
+                    {
+                        Console.WriteLine("Copying {0} to {1}", file.Name, targetPath);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Moving {0} to {1}", file.Name, targetPath);
+                    }
+                }
                 if (!this.Options.Simulate)
                 {
                     try

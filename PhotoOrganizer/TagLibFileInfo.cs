@@ -43,19 +43,30 @@ namespace PhotoOrganizer
         {
             switch (sourceFile.Extension.ToLowerInvariant())
             {
-                case "mp4":
-                case "mpg":
-                case "wmv":
+                case ".mp4":
+                case ".mpg":
+                case ".wmv":
+                case ".mov":
                     Type = MediaType.Video;
                     break;
             }
 
             TagLib.File file = null;
-            try 
+            try
             {
                 file = TagLib.File.Create(sourceFile.FullName);
             }
-            catch (TagLib.UnsupportedFormatException)
+            //catch (TagLib.UnsupportedFormatException)
+            //{
+            //    Type = MediaType.Unknown;
+            //    return;
+            //}
+            //catch (TagLib.CorruptFileException)
+            //{
+            //    Type = MediaType.Unknown;
+            //    return;
+            //}
+            catch (Exception)
             {
                 Type = MediaType.Unknown;
                 return;

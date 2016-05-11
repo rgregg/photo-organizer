@@ -19,6 +19,11 @@ namespace PhotoOrganizer
                 return;
             }
 
+            if (opts.Debug)
+            {
+                System.Diagnostics.Debugger.Break();
+            }
+
             if (string.IsNullOrEmpty(opts.SourceFolder))
                 opts.SourceFolder = System.Environment.CurrentDirectory;
 

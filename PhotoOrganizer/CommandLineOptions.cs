@@ -24,7 +24,7 @@ namespace PhotoOrganizer
         [Option("copy", HelpText="Copy files to the destination and leave them in the source folder.")]
         public bool CopyInsteadOfMove { get; set; }
 
-        [Option("conflict", HelpText = "Define the conflict behavior. Options are skip, rename, overwrite, or delete (the source file).")]
+        [Option("conflict", HelpText = "Define the conflict behavior. Options are skip, rename, overwrite, or delete (the source file).", DefaultValue = ExistingFileMode.Skip)]
         public ExistingFileMode ConflictBehavior { get; set; }
 
         [Option("parallel", HelpText="Perform the file operations in parallel")]
@@ -35,6 +35,9 @@ namespace PhotoOrganizer
 
         [Option('r', "recursive", HelpText="Recurse through subfolders of the source folder", DefaultValue=true)]
         public bool Recursive { get; set; }
+
+        [Option("debug")]
+        public bool Debug { get; set; }
     }
 
     public enum ExistingFileMode
