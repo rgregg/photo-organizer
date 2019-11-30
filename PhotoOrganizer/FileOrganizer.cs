@@ -62,11 +62,10 @@ namespace PhotoOrganizer
 
         private DateTimeOffset? ProcessFile(FileInfo file, DateTimeOffset? suggestion = null)
         {
-            IMediaInfo info = MediaInfoFactory.GetMediaInfo(file);
-            Console.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", file.Name, info.Type, info.Taken, info.CameraMake, info.CameraModel);
-
-
+            IMediaInfo info = MediaInfoFactory.GetMediaInfo(file, Options.DataParser);
             bool moveThisFile = info.Type == MediaType.Image || info.Type == MediaType.Video;
+
+            string action = moveThisFile ? this.Options.CopyInsteadOfMove ? "Copy" : "Move" : "Skipped";
 
             DateTimeOffset? dateTaken = info.Taken;
             if (!dateTaken.HasValue && info.Type == MediaType.Video && suggestion.HasValue)
@@ -81,6 +80,9 @@ namespace PhotoOrganizer
                 DirectoryInfo targetDirectory = new DirectoryInfo(Path.Combine(this.Destination.FullName, targetFullName));
                 string targetPath = Path.Combine(targetDirectory.FullName, file.Name);
 
+                // Write verbose output about what we're doing
+                Console.WriteLine("{0}: {1}\t{2}\t{3}\t{4}\t{5}", action, file.Name, info.Type, info.Taken, info.CameraMake, info.CameraModel);
+
                 if (this.Options.VerboseOutput)
                 {
                     if (this.Options.CopyInsteadOfMove)
@@ -92,39 +94,27 @@ namespace PhotoOrganizer
                         Console.WriteLine("Moving {0} to {1}", file.Name, targetPath);
                     }
                 }
-                if (!this.Options.Simulate)
+
+                // Check to see if the destination already exists
+                FileInfo destination = new FileInfo(targetPath);
+                if (destination.Exists)
                 {
-                    try
+                    FileAlreadyExists(file, targetPath);
+                }
+                else
+                {
+                    if (!Options.Simulate)
                     {
                         targetDirectory.Create();
                         DoFileAction(file, targetPath);
                     }
-                    catch (IOException ioex)
-                    {
-
-                        switch (ioex.HResult)
-                        {
-                            case -2147024816:   // File already exists
-                            case -2147024713:
-                                FileAlreadyExists(file, targetPath);
-                                break;
-                            default:
-                                Console.WriteLine("File skipped (IOException {0}): {1}\n{2}", ioex.HResult, file.Name, ioex.Message);
-                                break;
-                        }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Error: " + ex.ToString());
-                    }
                 }
             }
-            else if (this.Options.VerboseOutput && moveThisFile)
+            else if (Options.VerboseOutput && moveThisFile)
             {
                 Console.WriteLine("Skipping file (no date taken): " + info.Filename);
             }
-            else if (this.Options.VerboseOutput)
+            else if (Options.VerboseOutput)
             {
                 Console.WriteLine("Skipping file (not included type): " + info.Filename);
             }
@@ -191,8 +181,11 @@ namespace PhotoOrganizer
                         {
                             VerboseLog("File already exists: Overwriting destination file");
 
-                            targetFile.Delete();
-                            DoFileAction(sourceFile, targetPath);
+                            if (!Options.Simulate)
+                            {
+                                targetFile.Delete();
+                                DoFileAction(sourceFile, targetPath);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -204,11 +197,13 @@ namespace PhotoOrganizer
                     {
                         VerboseLog("File already exists: Renaming on copy to destination");
 
-                        FileInfo targetFile = new FileInfo(targetPath);
-                        DirectoryInfo targetDirectory = targetFile.Directory;
-                        string renamedTargetPath = GenerateNewTargetFileName(targetPath, targetDirectory);
-                        
-                        DoFileAction(sourceFile, renamedTargetPath);
+                        if (!Options.Simulate)
+                        {
+                            FileInfo targetFile = new FileInfo(targetPath);
+                            DirectoryInfo targetDirectory = targetFile.Directory;
+                            string renamedTargetPath = GenerateNewTargetFileName(targetPath, targetDirectory);
+                            DoFileAction(sourceFile, renamedTargetPath);
+                        }
                         break;
                     }
                 case ExistingFileMode.Delete:
@@ -216,7 +211,10 @@ namespace PhotoOrganizer
                         if (FilesAreIdentifical(sourceFile, new FileInfo(targetPath)))
                         {
                             VerboseLog("File already exists: deleting source file.");
-                            sourceFile.Delete();
+                            if (!Options.Simulate)
+                            {
+                                sourceFile.Delete();
+                            }
                         }
                         else
                         {
@@ -256,10 +254,34 @@ namespace PhotoOrganizer
 
         private void DoFileAction(FileInfo file, string targetPath)
         {
-            if (this.Options.CopyInsteadOfMove)
-                file.CopyTo(targetPath);
-            else
-                file.MoveTo(targetPath);
+            try
+            {
+                if (this.Options.CopyInsteadOfMove)
+                {
+                    file.CopyTo(targetPath);
+                }
+                else
+                {
+                    file.MoveTo(targetPath);
+                }
+            }
+            catch (IOException ioex)
+            {
+                switch (ioex.HResult)
+                {
+                    case -2147024816:   // File already exists
+                    case -2147024713:
+                        FileAlreadyExists(file, targetPath);
+                        break;
+                    default:
+                        Console.WriteLine("File skipped (IOException {0}): {1}\n{2}", ioex.HResult, file.Name, ioex.Message);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.ToString());
+            }
         }
 
     }

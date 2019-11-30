@@ -38,6 +38,10 @@ namespace PhotoOrganizer
 
         [Option("debug")]
         public bool Debug { get; set; }
+
+
+        [Option("parser", HelpText = "Choose the data parser used to evaluate the files.")]
+        public DataParser DataParser { get; set; }
     }
 
     public enum ExistingFileMode
@@ -46,5 +50,13 @@ namespace PhotoOrganizer
         Rename,
         Overwrite,
         Delete
+    }
+
+    public enum DataParser
+    {
+        Default,
+        TagLib,
+        Shell32,
+        Universal
     }
 }
