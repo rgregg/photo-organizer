@@ -39,6 +39,9 @@ namespace PhotoOrganizer
         [Option("debug")]
         public bool Debug { get; set; }
 
+        [Option("cache", DefaultValue = false, HelpText ="Use a persistent cache for expensive to calculate media properties")]
+        public bool CacheFileInfo { get; set; }
+
 
         [Option("parser", HelpText = "Choose the data parser used to evaluate the files.")]
         public DataParser DataParser { get; set; }

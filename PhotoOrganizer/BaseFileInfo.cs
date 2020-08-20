@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PhotoOrganizer
 {
-    public abstract class BaseFileInfo : IMediaInfo
+    public abstract class BaseFileInfo : MediaInfo
     {
         protected System.IO.FileInfo sourceFile;
         public BaseFileInfo(System.IO.FileInfo file)
@@ -17,26 +17,30 @@ namespace PhotoOrganizer
 
         protected abstract void ParseFile();
 
-        public string Filename { get { return sourceFile.Name; } }
-        public string Path { get { return sourceFile.FullName; } }
-        public DateTimeOffset Created
+        public override string Filename
         {
-            get
-            {
-                return new DateTimeOffset(sourceFile.CreationTimeUtc);
-            }
+            get { return sourceFile.Name; }
+            set { throw new NotSupportedException(); }
         }
-        public DateTimeOffset LastModified
+        public override string FullPath { 
+            get { return sourceFile.FullName; } 
+            set { throw new NotSupportedException(); }
+        }
+        public override DateTimeOffset Created
         {
-            get
-            {
-                return new DateTimeOffset(sourceFile.LastWriteTimeUtc);
-            }
+            get { return new DateTimeOffset(sourceFile.CreationTimeUtc); }
+            set { throw new NotSupportedException(); }
         }
-        public DateTimeOffset? Taken { get; protected set; }
-        public string CameraMake { get; protected set; }
-        public string CameraModel { get; protected set; }
-        public MediaType Type { get; protected set; }
+        public override long Size
+        {
+            get { return sourceFile.Length; }
+            set { throw new NotSupportedException(); }
+        }
+        public override DateTimeOffset LastModified
+        {
+            get { return new DateTimeOffset(sourceFile.LastWriteTimeUtc); }
+            set { throw new NotSupportedException(); }
+        }
 
         protected bool IsVideoFile()
         {

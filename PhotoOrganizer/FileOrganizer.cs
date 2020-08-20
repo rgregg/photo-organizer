@@ -13,14 +13,17 @@ namespace PhotoOrganizer
 
         CommandLineOptions Options { get; set; }
 
+        ParsedFileCache Cache { get; set; }
+
         public FileOrganizer(DirectoryInfo destination)
         {
             this.Destination = destination;
         }
 
-        public FileOrganizer(DirectoryInfo destination, CommandLineOptions opts) : this(destination)
+        public FileOrganizer(DirectoryInfo destination, CommandLineOptions opts, ParsedFileCache cache) : this(destination)
         {
             this.Options = opts;
+            this.Cache = cache;
         }
 
 
@@ -62,7 +65,28 @@ namespace PhotoOrganizer
 
         private DateTimeOffset? ProcessFile(FileInfo file, DateTimeOffset? suggestion = null)
         {
-            IMediaInfo info = MediaInfoFactory.GetMediaInfo(file, Options.DataParser);
+            MediaInfo info = null;
+            bool fromCache = false;
+            if (Options.CacheFileInfo)
+            {
+                MediaInfo cachedData;
+                if (Cache.CacheLookup(file, out cachedData))
+                {
+                    info = cachedData;
+                    fromCache = true;
+                }
+            }
+
+            if (null == info)
+            {
+                info = MediaInfoFactory.GetMediaInfo(file, Options.DataParser);
+            }
+
+            if (Options.CacheFileInfo && !fromCache)
+            {
+                Cache.Add(info);
+            }
+
             bool moveThisFile = info.Type == MediaType.Image || info.Type == MediaType.Video;
 
             string action = moveThisFile ? this.Options.CopyInsteadOfMove ? "Copy" : "Move" : "Skipped";

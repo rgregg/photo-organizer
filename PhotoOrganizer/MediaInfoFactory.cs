@@ -4,7 +4,7 @@ namespace PhotoOrganizer
 {
     public static class MediaInfoFactory
     {
-        public static IMediaInfo GetMediaInfo(System.IO.FileInfo file, DataParser parser) 
+        public static MediaInfo GetMediaInfo(System.IO.FileInfo file, DataParser parser) 
         {
             switch(parser)
             {
@@ -20,9 +20,9 @@ namespace PhotoOrganizer
             }
         }
 
-        private static IMediaInfo TryMultipleSources(System.IO.FileInfo file)
+        private static MediaInfo TryMultipleSources(System.IO.FileInfo file)
         {
-            IMediaInfo parser = new TagLibFileInfo(file);
+            MediaInfo parser = new TagLibFileInfo(file);
             if (parser.Type != MediaType.Unknown)
             {
                 return parser;

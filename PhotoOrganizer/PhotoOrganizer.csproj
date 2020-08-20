@@ -57,6 +57,9 @@
     <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\WindowsAPICodePack-Shell.1.1.1\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -73,13 +76,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseFileInfo.cs" />
+    <Compile Include="ParsedFileCache.cs" />
     <Compile Include="CFileInfo.cs" />
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="FileOrganizer.cs" />
+    <Compile Include="GooglePhotos\GooglePhotosSource.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TagLibFileInfo.cs" />
-    <Compile Include="IMediaInfo.cs" />
+    <Compile Include="MediaInfo.cs" />
     <Compile Include="MediaInfoFactory.cs" />
     <Compile Include="ShellExtendedFileInfo.cs" />
   </ItemGroup>

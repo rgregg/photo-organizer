@@ -24,8 +24,23 @@ namespace PhotoOrganizer
                 System.Diagnostics.Debugger.Break();
             }
 
+            ParsedFileCache cache = new ParsedFileCache(opts.SourceFolder);
+
+            Console.CancelKeyPress += (sender, eventArgs) => {
+                
+                if (opts.CacheFileInfo)
+                {
+                    Console.WriteLine("Flushing cache to disk...");
+                    cache.PersistCache();
+                }
+                Environment.Exit(-1);
+            };
+
+
             if (string.IsNullOrEmpty(opts.SourceFolder))
                 opts.SourceFolder = System.Environment.CurrentDirectory;
+
+            
 
             DirectoryInfo destination = new DirectoryInfo(opts.DestinationFolder);
             if (!destination.Exists)
@@ -50,8 +65,14 @@ namespace PhotoOrganizer
                 Console.WriteLine();
             }
 
-            FileOrganizer organizer = new FileOrganizer(destination, opts);
+            FileOrganizer organizer = new FileOrganizer(destination, opts, cache);
             organizer.ProcessSourceFolder(source);
+            if (cache.HasChanged)
+            {
+                cache.PersistCache();
+            }
         }
+
+        
     }
 }
