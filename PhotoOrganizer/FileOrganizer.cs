@@ -79,7 +79,7 @@ namespace PhotoOrganizer
                 }
             }
 
-            if (null == info)
+            if (null == info || info.Type == MediaType.Unknown)
             {
                 info = MediaInfoFactory.GetMediaInfo(file, Options.DataParser);
             }
