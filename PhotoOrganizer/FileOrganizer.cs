@@ -30,7 +30,9 @@ namespace PhotoOrganizer
         public void ProcessSourceFolder(DirectoryInfo source)
         {
             if (Options.VerboseOutput)
+            {
                 Console.WriteLine("Process source folder {0}.", source.FullName);
+            }
 
             var files = source.EnumerateFiles();
             if (this.Options.RunInParallel)

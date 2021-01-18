@@ -83,6 +83,11 @@
     <Compile Include="GooglePhotos\GooglePhotosSource.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="MediaTypes.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>MediaTypes.resx</DependentUpon>
+    </Compile>
     <Compile Include="TagLibFileInfo.cs" />
     <Compile Include="MediaInfo.cs" />
     <Compile Include="MediaInfoFactory.cs" />
@@ -91,6 +96,12 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MediaTypes.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>MediaTypes.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

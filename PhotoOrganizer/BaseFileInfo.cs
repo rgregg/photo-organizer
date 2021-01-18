@@ -44,16 +44,27 @@ namespace PhotoOrganizer
 
         protected bool IsVideoFile()
         {
-            switch (sourceFile.Extension.ToLowerInvariant())
-            {
-                case ".mp4":
-                case ".mpg":
-                case ".wmv":
-                case ".mov":
-                    return true;
-                default:
-                    return false;
+            var mediaTypes = from ext in MediaTypes.VideoFormatExtensions.Split(',')
+                                  select "." + ext.ToLowerInvariant();
+
+            if (mediaTypes.Contains(sourceFile.Extension.ToLowerInvariant())) {
+                return true;
             }
+
+            return false;
+        }
+
+        protected bool IsPhotoFile()
+        {
+            var mediaTypes = from ext in MediaTypes.PhotoFormatExtensions.Split(',')
+                             select "." + ext.ToLowerInvariant();
+
+            if (mediaTypes.Contains(sourceFile.Extension.ToLowerInvariant()))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

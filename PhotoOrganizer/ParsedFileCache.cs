@@ -26,6 +26,11 @@ namespace PhotoOrganizer
             LoadCache();
         }
 
+        public void ClearAll()
+        {
+            memoryCache.Clear();
+        }
+
         public void Add(MediaInfo parsedFile)
         {
             memoryCache[ComputeSha256Hash(parsedFile.FullPath)] = parsedFile;

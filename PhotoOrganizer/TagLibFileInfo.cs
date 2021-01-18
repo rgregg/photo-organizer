@@ -13,6 +13,10 @@ namespace PhotoOrganizer
             {
                 Type = MediaType.Video;
             }
+            else if (IsPhotoFile())
+            {
+                Type = MediaType.Image;
+            }
 
             TagLib.File file = null;
             try

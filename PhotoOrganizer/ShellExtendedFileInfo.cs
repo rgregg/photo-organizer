@@ -25,19 +25,24 @@ namespace PhotoOrganizer
             {
                 Type = MediaType.Video;
             }
+            else if( IsPhotoFile())
+            {
+                Type = MediaType.Image;
+            }
+            else
+            {
+                Type = MediaType.Unknown;
+            }
 
             try
             {
                 var file = ShellFile.FromFilePath(sourceFile.FullName);
-                Taken = file.Properties.System.Photo.DateTaken.Value;
+                Taken = file.Properties.System.Photo.DateTaken.Value ?? file.Properties.System.Media.DateEncoded.Value;
                 CameraMake = file.Properties.System.Photo.CameraManufacturer.Value;
                 CameraModel = file.Properties.System.Photo.CameraModel.Value;
-                if (Taken != null) {
-                    Type = MediaType.Image;
-                }
-                else
+                if (Type == MediaType.Unknown && !string.IsNullOrEmpty(CameraMake))
                 {
-                    Type = MediaType.Unknown;
+                    Type = MediaType.Image;
                 }
             }
             catch (Exception ex)

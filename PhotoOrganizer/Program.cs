@@ -25,6 +25,10 @@ namespace PhotoOrganizer
             }
 
             ParsedFileCache cache = new ParsedFileCache(opts.SourceFolder);
+            if (opts.ResetCache)
+            {
+                cache.ClearAll();
+            }
 
             Console.CancelKeyPress += (sender, eventArgs) => {
                 

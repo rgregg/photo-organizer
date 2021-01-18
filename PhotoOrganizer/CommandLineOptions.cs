@@ -42,6 +42,9 @@ namespace PhotoOrganizer
         [Option("cache", DefaultValue = false, HelpText ="Use a persistent cache for expensive to calculate media properties")]
         public bool CacheFileInfo { get; set; }
 
+        [Option("reset-cache", DefaultValue = false, HelpText = "Force the cache file to be cleared and reload all file properties.")]
+        public bool ResetCache { get; set; }
+
 
         [Option("parser", HelpText = "Choose the data parser used to evaluate the files.")]
         public DataParser DataParser { get; set; }
