@@ -76,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseFileInfo.cs" />
+    <Compile Include="FileTypeRecognizer.cs" />
     <Compile Include="ParsedFileCache.cs" />
     <Compile Include="CFileInfo.cs" />
     <Compile Include="CommandLineOptions.cs" />
