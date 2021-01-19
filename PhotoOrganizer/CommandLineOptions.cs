@@ -29,6 +29,15 @@ namespace PhotoOrganizer
 
         [Option("parser", HelpText = "Choose the data parser used to evaluate the files.")]
         public DataParser DataParser { get; set; }
+
+        [Option('y', HelpText = "Answer yes/no questions with yes automatically.")]
+        public bool DefaultToYes { get; set; }
+
+        [Option('n', HelpText = "Answer yes/nop questions with no automatically.")]
+        public bool DefaultToNo { get; set; }
+
+        [Option("log", HelpText = "Path to a file where logs will be written")]
+        public string LogFile { get; set; }
     }
 
     public class OrganizeCommandLineOptions : UniversalCommandLineOptions

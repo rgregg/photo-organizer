@@ -17,15 +17,26 @@ namespace PhotoOrganizer
         public bool Recursive { get; protected set; }
         public bool Verbose { get; protected set; }
 
-        public RecursiveFileScanner(DirectoryInfo source, bool recursive, bool verbose)
+        public string LogFile { get; protected set; }
+
+        private StreamWriter LogFileStream { get; set; }
+
+        public RecursiveFileScanner(DirectoryInfo source, bool recursive, bool verbose, string logFile = null)
         {
-            this.OriginalSource = source;
-            this.Recursive = recursive;
-            this.Verbose = verbose;
+            OriginalSource = source;
+            Recursive = recursive;
+            Verbose = verbose;
+            LogFile = logFile;
         }
 
         public virtual void Scan()
         {
+            if (!string.IsNullOrEmpty(LogFile))
+            {
+                StreamWriter logStream = new StreamWriter(LogFile, true);
+                LogFileStream = logStream;
+                logStream.WriteLine($"{DateTime.Now} - Starting scan: ${OriginalSource.FullName}.");
+            }
 
             if (OriginalSource.Exists)
             {
@@ -34,6 +45,13 @@ namespace PhotoOrganizer
             else
             {
                 WriteLog($"Unable to locate directory {OriginalSource.FullName}");
+            }
+
+            if (null != LogFileStream)
+            {
+                LogFileStream.Flush();
+                LogFileStream.Dispose();
+                LogFileStream = null;
             }
         }
 
@@ -67,6 +85,10 @@ namespace PhotoOrganizer
             if (!verbose || Verbose)
             {
                 Console.WriteLine(message);
+                if (null != LogFileStream)
+                {
+                    LogFileStream.WriteLine($"{DateTime.Now} - {message}");
+                }
             }
         }
     }

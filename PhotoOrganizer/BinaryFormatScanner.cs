@@ -16,11 +16,16 @@ namespace PhotoOrganizer
         private readonly FileTypeRecognizer Recognizer = new FileTypeRecognizer();
 
         public bool InteractiveMode { get; set; }
+        public bool AutoAnswerYes { get; set; }
+        public bool AutoAnswerNo { get; set; }
 
         public BinaryFormatScanner(ScanCommandOptions opts)
             : base(new DirectoryInfo(opts.SourceFolder), opts.Recursive, opts.VerboseOutput)
         {
             InteractiveMode = true;
+            AutoAnswerYes = opts.DefaultToYes;
+            AutoAnswerNo = opts.DefaultToNo;
+            LogFile = opts.LogFile;
         }
 
         protected override void ScanFile(FileInfo file)
@@ -102,24 +107,37 @@ namespace PhotoOrganizer
                 Console.Write(" [y/N]: ");
             }
 
-            string line = Console.ReadLine();
-            if (string.IsNullOrEmpty(line))
+            if (AutoAnswerNo)
             {
-                return defaultIsYes;
-            }
-
-            if (line.Equals("y", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            if (line.Equals("n", StringComparison.OrdinalIgnoreCase))
-            {
+                Console.WriteLine("N");
                 return false;
             }
+            else if (AutoAnswerYes)
+            {
+                Console.WriteLine("Y");
+                return true;
+            }
+            else
+            {
+                string line = Console.ReadLine();
+                if (string.IsNullOrEmpty(line))
+                {
+                    return defaultIsYes;
+                }
 
-            Console.WriteLine("Invalid input. Try again.");
-            return AskYesOrNoQuestion(prompt, defaultIsYes);
+                if (line.Equals("y", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (line.Equals("n", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                Console.WriteLine("Invalid input. Try again.");
+                return AskYesOrNoQuestion(prompt, defaultIsYes);
+            }
         }
     }
 }
