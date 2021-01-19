@@ -108,6 +108,8 @@ namespace PhotoOrganizer
 
     public class ByteRangeMatch : IRangeMatch
     {
+        public static readonly byte? Wildcard = null;
+
         public byte?[] ByteRange { get; set; }
 
         public ByteRangeMatch() { }
@@ -115,6 +117,28 @@ namespace PhotoOrganizer
         public ByteRangeMatch(params byte?[] bytes)
         {
             this.ByteRange = bytes;
+        }
+
+        public ByteRangeMatch(string byteFormat)
+        {
+            // input string is formatted as follows:
+            // 01 02 03 04 AB CD ?? 00
+            // where bytes are separated by spaces. ?? means a wildcard.
+
+            var components = byteFormat.Split(' ');
+            List<byte?> range = new List<byte?>();
+            for(int i = 0; i < components.Length; i++)
+            {
+                if (components[i].Equals("??"))
+                {
+                    range.Add(Wildcard);
+                }
+                else
+                {
+                    range.Add(Convert.ToByte(components[i], 16));
+                }
+            }
+            ByteRange = range.ToArray();
         }
 
         public byte?[] GetRange()
