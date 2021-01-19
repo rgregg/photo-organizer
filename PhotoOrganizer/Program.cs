@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using CommandLine.Text;
+using CommandLine;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace PhotoOrganizer
 {
@@ -12,17 +14,23 @@ namespace PhotoOrganizer
     {
         static void Main(string[] args)
         {
-            var opts = new CommandLineOptions();
-            if (!CommandLine.Parser.Default.ParseArguments(args, opts))
-            {
-                Console.WriteLine(HelpText.AutoBuild(opts));
-                return;
-            }
+            Console.WriteLine("PhotoOrganizer - {0}", Version);
+            Program p = new Program();
 
-            if (opts.Debug)
-            {
-                System.Diagnostics.Debugger.Break();
-            }
+            Parser.Default.ParseArguments<CopyCommandOptions, MoveCommandOptions, ScanCommandOptions>(args)
+                .WithParsed<MoveCommandOptions>(options => { p.OrganizeMedia(false, options); })
+                .WithParsed<CopyCommandOptions>(options => { p.OrganizeMedia(true, options); })
+                .WithParsed<ScanCommandOptions>(options => { p.ScanMedia(options); })
+                .WithNotParsed(errors => {
+                    Console.WriteLine("Incorrect syntax. Error.");
+                });
+        }
+
+        private void OrganizeMedia(bool copyInsteadOfMove, OrganizeCommandLineOptions opts)
+        {
+            BreakForDebugger(opts);
+
+            opts.CopyInsteadOfMove = copyInsteadOfMove;
 
             ParsedFileCache cache = new ParsedFileCache(opts.SourceFolder);
             if (opts.ResetCache)
@@ -31,7 +39,7 @@ namespace PhotoOrganizer
             }
 
             Console.CancelKeyPress += (sender, eventArgs) => {
-                
+
                 if (opts.CacheFileInfo)
                 {
                     Console.WriteLine("Flushing cache to disk...");
@@ -42,9 +50,9 @@ namespace PhotoOrganizer
 
 
             if (string.IsNullOrEmpty(opts.SourceFolder))
+            {
                 opts.SourceFolder = System.Environment.CurrentDirectory;
-
-            
+            }
 
             DirectoryInfo destination = new DirectoryInfo(opts.DestinationFolder);
             if (!destination.Exists)
@@ -69,14 +77,36 @@ namespace PhotoOrganizer
                 Console.WriteLine();
             }
 
-            FileOrganizer organizer = new FileOrganizer(destination, opts, cache);
-            organizer.ProcessSourceFolder(source);
+            MediaOrganizer organizer = new MediaOrganizer(source, destination, opts, cache);
+            organizer.Scan();
             if (cache.HasChanged)
             {
                 cache.PersistCache();
             }
         }
 
-        
+        private void ScanMedia(ScanCommandOptions options)
+        {
+            BreakForDebugger(options);
+        }
+
+        private void BreakForDebugger(UniversalCommandLineOptions opts)
+        {
+            if (opts.Debug)
+            {
+                Debugger.Break();
+            }
+        }
+
+        public static string Version
+        {
+            get
+            {
+                Assembly asm = Assembly.GetExecutingAssembly();
+                FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(asm.Location);
+                return String.Format("{0}.{1}", fvi.ProductMajorPart, fvi.ProductMinorPart);
+            }
+        }
+
     }
 }
