@@ -88,6 +88,9 @@ namespace PhotoOrganizer
         private void ScanMedia(ScanCommandOptions options)
         {
             BreakForDebugger(options);
+
+            BinaryFormatScanner scanner = new BinaryFormatScanner(options);
+            scanner.Scan();
         }
 
         private void BreakForDebugger(UniversalCommandLineOptions opts)

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30324.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhotoOrganizer", "PhotoOrganizer\PhotoOrganizer.csproj", "{E99CD3E0-0A3A-44F3-9A08-29723DD504F1}"
 EndProject
@@ -18,5 +18,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {401602F1-65A0-4F6D-BAF1-DCA5FB9C98AC}
 	EndGlobalSection
 EndGlobal
