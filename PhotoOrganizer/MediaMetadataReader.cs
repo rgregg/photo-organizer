@@ -15,6 +15,8 @@ namespace PhotoOrganizer
         {
             if (null == logger) throw new ArgumentNullException("logger");
 
+            logger.WriteLog($"Metadata parser: Reading {sourceFile.Name} metadata with Shell32.", true);
+
             var results = new MediaMetadata();
             try
             {

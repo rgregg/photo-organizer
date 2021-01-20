@@ -40,6 +40,7 @@ namespace PhotoOrganizer
             {
                 Format = signature.Format,
                 Metadata = metadata,
+                Type = signature.Type,
                 Size = file.Length,
                 LastModified = file.LastWriteTimeUtc
             };
@@ -62,14 +63,21 @@ namespace PhotoOrganizer
 
             if (memoryCache.TryGetValue(key, out CacheEntry storedData))
             {
+                LogWriter.WriteLog($"Cache: Found a record for {file.FullName}", true);
                 if (storedData.Size == file.Length &&
                     storedData.LastModified.Equals(new DateTimeOffset(file.LastWriteTimeUtc)))
                 {
+                    LogWriter.WriteLog($"Cache: Hit for {file.FullName}", true);
                     result = storedData;
                     return true;
                 }
+                else
+                {
+                    LogWriter.WriteLog($"Cache: Miss for {file.FullName}, {storedData.Size}->{file.Length}; {storedData.LastModified}->{file.LastWriteTimeUtc}", true);
+                }
             }
 
+            LogWriter.WriteLog($"Cache: Miss for {file.FullName}", true);
             result = null;
             return false;
         }

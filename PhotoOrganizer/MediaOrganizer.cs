@@ -137,6 +137,7 @@ namespace PhotoOrganizer
             }
 
             // Calculate data if necessary
+            LogWriter.WriteLog($"Metadata: Found a record for {file.Name}: {metadata}, {type}, {format}", true);
             if (null == metadata || type == MediaType.Unknown || format == BinaryFormat.Unknown)
             {
                 metadata = MediaMetadataReader.ParseFile(file, LogWriter);
