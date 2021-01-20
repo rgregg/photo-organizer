@@ -9,20 +9,23 @@ using Newtonsoft.Json;
 
 namespace PhotoOrganizer
 {
-    public class ParsedFileCache
+    public class ParserCache
     {
         private const int MAX_CACHE_SIZE = 100000;
         private string CACHE_PATH;
+        private readonly ILogWriter LogWriter;
 
-        private Dictionary<String, MediaInfo> memoryCache;
+        private Dictionary<string, CacheEntry> memoryCache;
 
-        public ParsedFileCache(string basePath)
+        public ParserCache(string cachePath, ILogWriter logWriter)
         {
+            LogWriter = logWriter;
+
             CACHE_PATH = Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
                 "PhotoOrganizerCache");
             Directory.CreateDirectory(CACHE_PATH);
 
-            CACHE_PATH = Path.Combine(CACHE_PATH, ComputeSha256Hash(basePath) + ".json");
+            CACHE_PATH = Path.Combine(CACHE_PATH, ComputeSha256Hash(cachePath) + ".json");
             LoadCache();
         }
 
@@ -31,41 +34,47 @@ namespace PhotoOrganizer
             memoryCache.Clear();
         }
 
-        public void Add(MediaInfo parsedFile)
+        public void Add(FileInfo file, MediaMetadata metadata, FormatSignature signature)
         {
-            memoryCache[ComputeSha256Hash(parsedFile.FullPath)] = parsedFile;
-            HasChanged = true;
+            CacheEntry entry = new CacheEntry()
+            {
+                Format = signature.Format,
+                Metadata = metadata,
+                Size = file.Length,
+                LastModified = file.LastWriteTimeUtc
+            };
+
+            var key = ComputeSha256Hash(file.FullName);
+            memoryCache[key] = entry;
+            CacheHasChanged = true;
         }
 
         public void Remove(string path)
         {
             string key = ComputeSha256Hash(path);
             memoryCache.Remove(key);
-            HasChanged = true;
+            CacheHasChanged = true;
         }
 
-        public bool CacheLookup(FileInfo file, out MediaInfo storedEntity)
+        public bool TryCacheLookup(FileInfo file, out CacheEntry result)
         {
-            MediaInfo cacheHit = null;
-            if (memoryCache.TryGetValue(ComputeSha256Hash(file.FullName), out cacheHit))
+            var key = ComputeSha256Hash(file.FullName);
+
+            if (memoryCache.TryGetValue(key, out CacheEntry storedData))
             {
-                if (cacheHit.Size == file.Length && 
-                    cacheHit.Created.Equals(new DateTimeOffset(file.CreationTimeUtc)) && 
-                    cacheHit.LastModified.Equals(new DateTimeOffset(file.LastWriteTimeUtc)))
+                if (storedData.Size == file.Length &&
+                    storedData.LastModified.Equals(new DateTimeOffset(file.LastWriteTimeUtc)))
                 {
-                    storedEntity = cacheHit;
+                    result = storedData;
                     return true;
                 }
             }
 
-            storedEntity = null;
+            result = null;
             return false;
         }
 
-        public bool HasChanged
-        {
-            get; set;
-        }
+        public bool CacheHasChanged { get; set; }
 
         public void PersistCache()
         {
@@ -79,12 +88,15 @@ namespace PhotoOrganizer
             try 
             {
                 cached = File.ReadAllText(CACHE_PATH);
-                memoryCache = JsonConvert.DeserializeObject<Dictionary<String, MediaInfo>>(cached);
+                memoryCache = JsonConvert.DeserializeObject<Dictionary<string, CacheEntry>>(cached);
             }
             catch (Exception ex)
             {
-                System.Console.WriteLine($"Error loading folder cache. We'll start a fresh one. {ex.Message}");
-                memoryCache = new Dictionary<string, MediaInfo>();
+                if (null != LogWriter)
+                {
+                    LogWriter.WriteLog($"Error loading folder cache. We'll start a fresh one. {ex.Message}", false);
+                }
+                memoryCache = new Dictionary<string, CacheEntry>();
             }
         }
 
@@ -105,6 +117,14 @@ namespace PhotoOrganizer
                 return builder.ToString();
             }
         }
+    }
 
+    public class CacheEntry
+    {
+        public long Size { get; set; }
+        public DateTimeOffset LastModified { get; set; }
+        public MediaMetadata Metadata { get; set; }
+        public MediaType Type { get; set; }
+        public BinaryFormat Format { get; set; }
     }
 }

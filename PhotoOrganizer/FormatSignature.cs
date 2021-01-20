@@ -6,31 +6,57 @@ using System.Threading.Tasks;
 
 namespace PhotoOrganizer
 {
-    public class FormatMagicData
+    public class FormatSignature
     {
         public IEnumerable<IRangeMatch> Headers { get; private set; }
-        public FileBinaryFormat Format { get; set; }
-        public string Extension { get; set; }
+        public BinaryFormat Format { get; set; }
+        public IEnumerable<string> Extensions { get; set; }
         public MediaType Type { get; set; }
+        public bool Excluded { get; set; }
 
-        public FormatMagicData() { }
-        public FormatMagicData(MediaType type, FileBinaryFormat format, string extension, IRangeMatch header)
+        public FormatSignature() { }
+        public FormatSignature(MediaType type, BinaryFormat format, string extension, IRangeMatch header)
         {
             Headers = new List<IRangeMatch> { header };
             Format = format;
-            Extension = extension;
+            Extensions = new List<string> { extension };
             Type = type;
         }
 
-        public FormatMagicData(MediaType type, FileBinaryFormat format, string extension, params IRangeMatch[] headers)
+        public FormatSignature(MediaType type, BinaryFormat format, string extension, params IRangeMatch[] headers)
         {
             Headers = new List<IRangeMatch>(headers);
             Format = format;
-            Extension = extension;
+            Extensions = new List<string> { extension };
             Type = type;
         }
 
+        public FormatSignature(MediaType type, BinaryFormat format, string[] extensions, params IRangeMatch[] headers)
+        {
+            Headers = new List<IRangeMatch>(headers);
+            Format = format;
+            Type = type;
+            Extensions = new List<string>(extensions);
+        }
 
+        /// <summary>
+        /// Check if this instance matches a given file extension (.mpg for example)
+        /// </summary>
+        /// <param name="actualExtension"></param>
+        /// <returns></returns>
+        public bool ExtensionMatches(string actualExtension)
+        {
+            return (from e in Extensions
+                    where e.Equals(actualExtension, StringComparison.OrdinalIgnoreCase)
+                    select e).Any();
+        }
+
+        /// <summary>
+        /// Check if this instance matches a given file header from the binary file
+        /// </summary>
+        /// <param name="actualHeader"></param>
+        /// <param name="bytesRead"></param>
+        /// <returns></returns>
         public bool HeaderMatches(byte[] actualHeader, int bytesRead)
         {
             var matchingFormats = from f in Headers
@@ -39,6 +65,13 @@ namespace PhotoOrganizer
             return matchingFormats.Any();
         }
 
+        /// <summary>
+        /// Compare two byte arrays to see if they are equivelent.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="example"></param>
+        /// <param name="bytesRead"></param>
+        /// <returns></returns>
         private bool ByteStreamsAreEqual(byte[] source, byte?[] example, int bytesRead)
         {
             if (bytesRead > source.Length)
@@ -54,6 +87,7 @@ namespace PhotoOrganizer
 
             for (int index = 0; index < comparisonLength; index++)
             {
+                // We use null to indicate a Wildcard, so if !HasValue we ignore the comparison
                 if (example[index].HasValue && source[index] != example[index].Value)
                 {
                     return false;

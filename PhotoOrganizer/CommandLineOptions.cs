@@ -24,9 +24,6 @@ namespace PhotoOrganizer
         [Option('s', "source", HelpText = "Source folder path")]
         public string SourceFolder { get; set; }
 
-        [Option('r', "recursive", HelpText = "Recurse through subfolders of the source folder", Default = true)]
-        public bool Recursive { get; set; }
-
         [Option("parser", HelpText = "Choose the data parser used to evaluate the files.")]
         public DataParser DataParser { get; set; }
 
@@ -35,9 +32,6 @@ namespace PhotoOrganizer
 
         [Option('n', HelpText = "Answer yes/nop questions with no automatically.")]
         public bool DefaultToNo { get; set; }
-
-        [Option("log", HelpText = "Path to a file where logs will be written")]
-        public string LogFile { get; set; }
     }
 
     public class OrganizeCommandLineOptions : UniversalCommandLineOptions
@@ -57,18 +51,11 @@ namespace PhotoOrganizer
         [Option("dest-format", HelpText = "Destination folder format. Uses the DateTime formatting syntax.", Default = "yyyy\\\\yyyy-MM-MMMM")]
         public string DirectoryFormat { get; set; }
 
-        [Option('r', "recursive", HelpText = "Recurse through subfolders of the source folder", Default = true)]
-        public bool Recursive { get; set; }
-
         [Option("cache", Default = false, HelpText = "Use a persistent cache for expensive to calculate media properties")]
         public bool CacheFileInfo { get; set; }
 
         [Option("reset-cache", Default = false, HelpText = "Force the cache file to be cleared and reload all file properties.")]
         public bool ResetCache { get; set; }
-
-        [Option("parser", HelpText = "Choose the data parser used to evaluate the files.")]
-        public DataParser DataParser { get; set; }
-
         public bool CopyInsteadOfMove { get; set; }
     }
 
@@ -82,6 +69,13 @@ namespace PhotoOrganizer
 
         [Option("debug", HelpText = "Force a debugger to be attached to the process.", Default = false)]
         public bool Debug { get; set; }
+        
+        [Option("log", HelpText = "Path to a file where logs will be written")]
+        public string LogFile { get; set; }
+
+        [Option('r', "recursive", HelpText = "Recurse through subfolders of the source folder", Default = true)]
+        public bool Recursive { get; set; }
+
     }
 
 

@@ -13,35 +13,30 @@ namespace PhotoOrganizer
     /// </summary>
     public class BinaryFormatScanner : RecursiveFileScanner
     {
-        private readonly FileTypeRecognizer Recognizer = new FileTypeRecognizer();
-
         public bool InteractiveMode { get; set; }
         public bool AutoAnswerYes { get; set; }
         public bool AutoAnswerNo { get; set; }
 
-        public BinaryFormatScanner(ScanCommandOptions opts)
-            : base(new DirectoryInfo(opts.SourceFolder), opts.Recursive, opts.VerboseOutput)
+        public BinaryFormatScanner(ScanCommandOptions opts, ILogWriter logWriter)
+            : base(new DirectoryInfo(opts.SourceFolder), opts.Recursive, opts.VerboseOutput, true, logWriter)
         {
             InteractiveMode = true;
             AutoAnswerYes = opts.DefaultToYes;
             AutoAnswerNo = opts.DefaultToNo;
-            LogFile = opts.LogFile;
         }
 
-        protected override void ScanFile(FileInfo file)
+        protected override void ScanFile(FileInfo file, FormatSignature signature)
         {
-            base.ScanFile(file);
+            base.ScanFile(file, signature);
 
             // Check to see if file extension matches file type
-            var dataType = Recognizer.DetermineFileFormat(file.FullName);
-
-            if (dataType.Format == FileBinaryFormat.Unknown)
+            if (signature.Excluded)
             {
-                string header = Recognizer.ReadFileHeader(file);
-                WriteLog($"File {file.FullName} of type {dataType.Format} has header:\n{header}");
+                WriteLog($"Skipping {file.Name} -- on excluded list", true);
+                return;
             }
 
-            string expectedFileExtension = dataType.Extension;
+            string expectedFileExtension = signature.Extensions.First();
             if (!string.IsNullOrEmpty(expectedFileExtension))
             {
                 if (!file.Extension.Equals(expectedFileExtension, StringComparison.OrdinalIgnoreCase))
@@ -49,19 +44,19 @@ namespace PhotoOrganizer
                     if (InteractiveMode)
                     {
                         // Extension doesn't match expected value
-                        if (AskYesOrNoQuestion($"File {file.Name} is {dataType.Format} -- rename to correct extension ({expectedFileExtension})?", true))
+                        if (AskYesOrNoQuestion($"File {file.Name} is {signature.Format} -- rename to correct extension ({expectedFileExtension})?", true))
                         {
                             RenameFileExtension(file, expectedFileExtension);
                         }
                     }
                     else
                     {
-                        WriteLog($"File {file.Name} is {dataType.Format} -- file extension should be {expectedFileExtension} instead.");
+                        WriteLog($"File {file.Name} is {signature.Format} -- file extension should be {expectedFileExtension} instead.");
                     }
                 }
                 else
                 {
-                    WriteLog($"File {file.Name} is {dataType.Format} -- file extension matches.", true);
+                    WriteLog($"File {file.Name} is {signature.Format} -- file extension matches.", true);
                 }
             }
         }

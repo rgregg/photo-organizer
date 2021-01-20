@@ -11,9 +11,8 @@ namespace PhotoOrganizer
     {
         public DirectoryInfo Destination { get; private set; }
         public bool UseCache { get; set; }
-        public ParsedFileCache Cache { get; private set; }
+        public ParserCache Cache { get; private set; }
         public OrganizationMode Action { get; set; }
-        public DataParser Parser { get; private set; }
         public string DestinationDirectoryFormat { get; private set; }
         public List<MediaType> MediaTypesToOrganizer { get; private set; }
         public ExistingFileMode ActionOnExistingFile { get; private set; }
@@ -25,8 +24,8 @@ namespace PhotoOrganizer
             Simulation
         }
 
-        public MediaOrganizer(DirectoryInfo source, DirectoryInfo destination, OrganizeCommandLineOptions opts, ParsedFileCache cache) 
-            : base(source, opts.Recursive, opts.VerboseOutput)
+        public MediaOrganizer(DirectoryInfo source, DirectoryInfo destination, OrganizeCommandLineOptions opts, ParserCache cache, ILogWriter logWriter) 
+            : base(source, opts.Recursive, opts.VerboseOutput, false, logWriter)
         {
             Cache = cache;
             Destination = destination;
@@ -45,30 +44,28 @@ namespace PhotoOrganizer
             }
             
             UseCache = opts.CacheFileInfo;
-            Parser = opts.DataParser;
             DestinationDirectoryFormat = opts.DirectoryFormat;
             MediaTypesToOrganizer = new List<MediaType> { MediaType.Image, MediaType.Video };
             ActionOnExistingFile = opts.ConflictBehavior;
-
         }
 
         protected DateTimeOffset? LastKnownFileDate { get; set; }
 
-        protected override void ScanFile(FileInfo file)
+        protected override void ScanFile(FileInfo file, FormatSignature signature)
         {
-            base.ScanFile(file);
+            base.ScanFile(file, signature);
 
-            MediaInfo info = GetMediaInfo(file);
-            bool performAction = MediaTypesToOrganizer.Contains(info.Type);
+            MediaMetadata metadata = GetMediaInfo(file, signature);
+            bool performAction = MediaTypesToOrganizer.Contains(signature.Type);
             if (!performAction)
             {
-                WriteLog($"Skipping {file.Name} -- not a supported media type: {info.Type}.");
+                WriteLog($"Skipping {file.Name} -- not a supported media type: {signature.Type}.");
                 return;
             }
 
             // Attempt to infer date for files that don't have one
-            DateTimeOffset? mediaDate = info.Taken;
-            if (!mediaDate.HasValue && LastKnownFileDate.HasValue && info.Type == MediaType.Video)
+            DateTimeOffset? mediaDate = metadata.DateCaptured;
+            if (!mediaDate.HasValue && LastKnownFileDate.HasValue && signature.Type == MediaType.Video)
             {
                 WriteLog($"Infering date for {file.Name} as {LastKnownFileDate.Value}");
                 mediaDate = LastKnownFileDate.Value;
@@ -84,7 +81,7 @@ namespace PhotoOrganizer
             DirectoryInfo targetDirectory = new DirectoryInfo(Path.Combine(Destination.FullName, targetFullName));
             string targetPath = Path.Combine(targetDirectory.FullName, file.Name);
 
-            WriteActivity(file, info, targetPath);
+            WriteActivity(file, metadata, targetPath, signature);
 
             // Check to see if the destination already exists
             FileInfo destination = new FileInfo(targetPath);
@@ -110,9 +107,9 @@ namespace PhotoOrganizer
             LastKnownFileDate = mediaDate;
         }
 
-        private void WriteActivity(FileInfo file, MediaInfo info, string targetPath)
+        private void WriteActivity(FileInfo file, MediaMetadata info, string targetPath, FormatSignature signature)
         {
-            WriteLog($"{Action}: {file.Name}\t{info.Type}\t{info.Taken}\t{info.CameraMake}\t{info.CameraModel}");
+            WriteLog($"{Action}: {file.Name}\t{signature.Type}\t{info.DateCaptured}\t{info.CameraMake}\t{info.CameraModel}");
 
             if (Action == OrganizationMode.CopyToDestination)
             {
@@ -124,26 +121,31 @@ namespace PhotoOrganizer
             }
         }
 
-        private MediaInfo GetMediaInfo(FileInfo file)
+        private MediaMetadata GetMediaInfo(FileInfo file, FormatSignature signature)
         {
-            MediaInfo info = null;
+            MediaMetadata metadata = null;
+            MediaType type = MediaType.Unknown;
+            BinaryFormat format = BinaryFormat.Unknown;
 
             // Load cached data for the file, if available
-            if (UseCache && Cache.CacheLookup(file, out info))
+            if (UseCache && Cache.TryCacheLookup(file, out CacheEntry entry))
             {
                 WriteLog($"Loaded cached data for {file.Name}.", true);
+                metadata = entry.Metadata;
+                type = entry.Type;
+                format = entry.Format;
             }
 
             // Calculate data if necessary
-            if (null == info || info.Type == MediaType.Unknown)
+            if (null == metadata || type == MediaType.Unknown || format == BinaryFormat.Unknown)
             {
-                info = MediaInfoFactory.GetMediaInfo(file, Parser);
+                metadata = MediaMetadataReader.ParseFile(file, LogWriter);
                 if (UseCache) 
                 {
-                    Cache.Add(info); 
+                    Cache.Add(file, metadata, signature); 
                 }
             }
-            return info;
+            return metadata;
         }
 
         /// <summary>

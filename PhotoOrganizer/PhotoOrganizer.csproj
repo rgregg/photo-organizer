@@ -67,44 +67,25 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="policy.2.0.taglib-sharp">
-      <HintPath>..\packages\taglib.2.1.0.0\lib\policy.2.0.taglib-sharp.dll</HintPath>
-    </Reference>
-    <Reference Include="taglib-sharp">
-      <HintPath>..\packages\taglib.2.1.0.0\lib\taglib-sharp.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BaseFileInfo.cs" />
     <Compile Include="FileTypeRecognizer.cs" />
     <Compile Include="BinaryFormatScanner.cs" />
-    <Compile Include="FormatMagicData.cs" />
-    <Compile Include="ParsedFileCache.cs" />
+    <Compile Include="FormatSignature.cs" />
+    <Compile Include="ILogWriter.cs" />
+    <Compile Include="ParserCache.cs" />
     <Compile Include="CFileInfo.cs" />
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="MediaOrganizer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="MediaTypes.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>MediaTypes.resx</DependentUpon>
-    </Compile>
     <Compile Include="RecursiveFileScanner.cs" />
-    <Compile Include="TagLibFileInfo.cs" />
-    <Compile Include="MediaInfo.cs" />
-    <Compile Include="MediaInfoFactory.cs" />
-    <Compile Include="ShellExtendedFileInfo.cs" />
+    <Compile Include="MediaMetadata.cs" />
+    <Compile Include="MediaMetadataReader.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="MediaTypes.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>MediaTypes.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

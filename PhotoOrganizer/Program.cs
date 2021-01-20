@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace PhotoOrganizer
 {
-    class Program
+    class Program : ILogWriter
     {
         static void Main(string[] args)
         {
@@ -29,10 +29,13 @@ namespace PhotoOrganizer
         private void OrganizeMedia(bool copyInsteadOfMove, OrganizeCommandLineOptions opts)
         {
             BreakForDebugger(opts);
+            SetupLogging(opts);
 
+            WriteLog($"Organizing media in {opts.SourceFolder} to {opts.DestinationFolder}", false);
+            WriteLog($"Copy: {copyInsteadOfMove}; Conflict: {opts.ConflictBehavior}; Cache: {opts.CacheFileInfo}; Directory Format: {opts.DirectoryFormat}", true);
             opts.CopyInsteadOfMove = copyInsteadOfMove;
 
-            ParsedFileCache cache = new ParsedFileCache(opts.SourceFolder);
+            ParserCache cache = new ParserCache(opts.SourceFolder, this);
             if (opts.ResetCache)
             {
                 cache.ClearAll();
@@ -77,19 +80,22 @@ namespace PhotoOrganizer
                 Console.WriteLine();
             }
 
-            MediaOrganizer organizer = new MediaOrganizer(source, destination, opts, cache);
+            MediaOrganizer organizer = new MediaOrganizer(source, destination, opts, cache, this);
             organizer.Scan();
-            if (cache.HasChanged)
+            if (cache.CacheHasChanged)
             {
                 cache.PersistCache();
             }
         }
 
-        private void ScanMedia(ScanCommandOptions options)
+        private void ScanMedia(ScanCommandOptions opts)
         {
-            BreakForDebugger(options);
+            BreakForDebugger(opts);
+            SetupLogging(opts);
 
-            BinaryFormatScanner scanner = new BinaryFormatScanner(options);
+            WriteLog($"Scanning media in {opts.SourceFolder} for errors.", false);
+
+            BinaryFormatScanner scanner = new BinaryFormatScanner(opts, this);
             scanner.Scan();
         }
 
@@ -108,6 +114,29 @@ namespace PhotoOrganizer
                 Assembly asm = Assembly.GetExecutingAssembly();
                 FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(asm.Location);
                 return String.Format("{0}.{1}", fvi.ProductMajorPart, fvi.ProductMinorPart);
+            }
+        }
+
+        private bool VerboseLogOutput = false;
+        private StreamWriter LogFileStream = null;
+        public void WriteLog(string message, bool verbose)
+        {
+            if (!verbose || VerboseLogOutput)
+            {
+                Console.WriteLine(message);
+                if (null != LogFileStream)
+                {
+                    LogFileStream.WriteLine($"{DateTime.Now} - {message}");
+                }
+            }
+        }
+
+        private void SetupLogging(UniversalCommandLineOptions opts)
+        {
+            VerboseLogOutput = opts.VerboseOutput;
+            if (!string.IsNullOrEmpty(opts.LogFile))
+            {
+                LogFileStream = new StreamWriter(opts.LogFile, true) { AutoFlush = true };
             }
         }
 
