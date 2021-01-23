@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PhotoOrganizer
+namespace MediaOrganizerConsoleApp
 {
     /// <summary>
     /// Implements a basic file scan that enumerates all of the files in a 

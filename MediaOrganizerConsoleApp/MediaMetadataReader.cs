@@ -7,7 +7,7 @@ using Microsoft.WindowsAPICodePack.Shell;
 using Microsoft.WindowsAPICodePack.Shell.PropertySystem;
 using System.IO;
 
-namespace PhotoOrganizer
+namespace MediaOrganizerConsoleApp
 {
     public class MediaMetadataReader
     {

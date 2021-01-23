@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
-namespace PhotoOrganizer.FormatConversion
+namespace MediaOrganizerConsoleApp.FormatConversion
 {
     public class ImageMagick
     {

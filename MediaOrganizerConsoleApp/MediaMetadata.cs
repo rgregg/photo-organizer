@@ -2,7 +2,7 @@
 using System;
 
 
-namespace PhotoOrganizer
+namespace MediaOrganizerConsoleApp
 {
     public class MediaMetadata
     {

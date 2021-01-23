@@ -7,7 +7,7 @@ using System.IO;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
 
-namespace PhotoOrganizer
+namespace MediaOrganizerConsoleApp
 {
     public class ParserCache
     {

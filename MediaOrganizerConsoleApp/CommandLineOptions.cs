@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
 
-namespace PhotoOrganizer
+namespace MediaOrganizerConsoleApp
 {
 
     [Verb("copy", HelpText = "Copy files from the source to destination in an organized fashion.")]

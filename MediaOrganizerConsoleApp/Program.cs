@@ -8,7 +8,7 @@ using CommandLine;
 using System.Reflection;
 using System.Diagnostics;
 
-namespace PhotoOrganizer
+namespace MediaOrganizerConsoleApp
 {
     class Program : ILogWriter
     {

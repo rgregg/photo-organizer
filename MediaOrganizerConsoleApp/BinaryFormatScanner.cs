@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PhotoOrganizer
+namespace MediaOrganizerConsoleApp
 {
     /// <summary>
     /// Verifies that the binary format of files matches the file extension for the file.

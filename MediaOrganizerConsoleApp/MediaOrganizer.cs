@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PhotoOrganizer
+namespace MediaOrganizerConsoleApp
 {
     public class MediaOrganizer : RecursiveFileScanner
     {
