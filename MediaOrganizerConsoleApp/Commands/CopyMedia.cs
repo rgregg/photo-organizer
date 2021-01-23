@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MediaOrganizerConsoleApp
+namespace MediaOrganizerConsoleApp.Commands
 {
-    public class MediaOrganizer : RecursiveFileScanner
+    public class CopyMedia : RecursiveFileScanner
     {
         public DirectoryInfo Destination { get; private set; }
         public bool UseCache { get; set; }
@@ -24,7 +21,7 @@ namespace MediaOrganizerConsoleApp
             Simulation
         }
 
-        public MediaOrganizer(DirectoryInfo source, DirectoryInfo destination, OrganizeCommandLineOptions opts, ParserCache cache, ILogWriter logWriter) 
+        public CopyMedia(DirectoryInfo source, DirectoryInfo destination, OrganizeCommandLineOptions opts, ParserCache cache, ILogWriter logWriter) 
             : base(source, opts.Recursive, opts.VerboseOutput, false, logWriter)
         {
             Cache = cache;
@@ -124,7 +121,7 @@ namespace MediaOrganizerConsoleApp
         private MediaMetadata GetMediaInfo(FileInfo file, FormatSignature signature)
         {
             MediaMetadata metadata = null;
-            MediaType type = MediaType.Unknown;
+            MediaType type = MediaType.Default;
             BinaryFormat format = BinaryFormat.Unknown;
 
             // Load cached data for the file, if available
@@ -138,7 +135,7 @@ namespace MediaOrganizerConsoleApp
 
             // Calculate data if necessary
             LogWriter.WriteLog($"Metadata: Found a record for {file.Name}: {metadata}, {type}, {format}", true);
-            if (null == metadata || type == MediaType.Unknown || format == BinaryFormat.Unknown)
+            if (null == metadata || type == MediaType.Default || format == BinaryFormat.Unknown)
             {
                 metadata = MediaMetadataReader.ParseFile(file, LogWriter);
                 if (UseCache) 

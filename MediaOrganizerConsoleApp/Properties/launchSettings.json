@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MediaOrganizerConsoleApp": {
+      "commandName": "Project",
+      "commandLineArgs": "convert --source E:\\Users\\Ryan\\OneDrive\\FamilyPhotos\\Originals\\2021 --destination E:\\temp --recursive --media Image --format jpg --quality 80"
+    }
+  }
+}

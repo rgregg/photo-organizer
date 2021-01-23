@@ -13,16 +13,44 @@ namespace MediaOrganizerConsoleApp
     {
     }
 
+    [Verb("convert", HelpText = "Convert files from one format to another.")]
+    public class ConvertCommandOptions : UniversalCommandLineOptions
+    {
+        [Option('s', "source", Required = true, HelpText = "Source folder for media files")]
+        public string SourceFolder { get; set; }
+
+        [Option("media", Default = MediaType.Default, HelpText = "Allow performing conversion on only a specific type of media files. Default converts all supported files.")]
+        public MediaType MediaTypeFilter { get; set; }
+
+        [Option('d', "destination", Required = true, HelpText = "Destination folder for converted files")]
+        public string DestinationFolder { get; set; }
+
+        [Option ("resize", Default = false, HelpText = "Resize media while converting to another format.")]
+        public bool Resize { get; set; }
+
+        [Option('w', HelpText = "Desired width for converted files")]
+        public int Width { get; set; }
+
+        [Option('h', HelpText = "Desired width for converted files")]
+        public int Height { get; set; }
+
+        [Option("format", Default = "jpg", HelpText = "File format for output files")]
+        public string Format { get; set; }
+
+        [Option("quality", Default = 80, HelpText = "Quality setting for the output files")]
+        public int Quality { get; set; }
+    }
+
     [Verb("scan", HelpText = "Scan and report on files in the source directory.")]
     public class ScanCommandOptions : UniversalCommandLineOptions
     {
         [Option('s', "source", Required = true, HelpText = "Source folder path")]
         public string SourceFolder { get; set; }
 
-        [Option('y', HelpText = "Answer yes/no questions with yes automatically.")]
+        [Option('y', HelpText = "Answer yes/no questions with YES automatically.")]
         public bool DefaultToYes { get; set; }
 
-        [Option('n', HelpText = "Answer yes/no questions with no automatically.")]
+        [Option('n', HelpText = "Answer yes/no questions with NO automatically.")]
         public bool DefaultToNo { get; set; }
     }
 
@@ -36,9 +64,6 @@ namespace MediaOrganizerConsoleApp
 
         [Option("conflict", HelpText = "Define the conflict behavior. Options are skip, rename, overwrite, or delete (the source file).", Default = ExistingFileMode.Skip)]
         public ExistingFileMode ConflictBehavior { get; set; }
-
-        [Option("parallel", HelpText = "Perform the file operations in parallel")]
-        public bool RunInParallel { get; set; }
 
         [Option("dest-format", HelpText = "Destination folder format. Uses the DateTime formatting syntax.", Default = "yyyy\\\\yyyy-MM-MMMM")]
         public string DirectoryFormat { get; set; }

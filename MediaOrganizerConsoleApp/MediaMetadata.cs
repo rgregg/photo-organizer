@@ -14,7 +14,7 @@ namespace MediaOrganizerConsoleApp
 
     public enum MediaType
     {
-        Unknown,
+        Default,
         Image,
         Video,
         Metadata,

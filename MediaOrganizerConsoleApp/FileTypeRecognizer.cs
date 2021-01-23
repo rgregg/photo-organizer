@@ -127,11 +127,11 @@ namespace MediaOrganizerConsoleApp
 
                 if (null != LogWriter)
                 {
-                    LogWriter.WriteLog($"File {fileInfo.FullName} of type {MediaType.Unknown} has header:\n{header}", false);
+                    LogWriter.WriteLog($"File {fileInfo.FullName} of type {MediaType.Default} has header:\n{header}", false);
                 }
             }
 
-            return new FormatSignature(MediaType.Unknown, BinaryFormat.Unknown, fileInfo.Extension);
+            return new FormatSignature(MediaType.Default, BinaryFormat.Unknown, fileInfo.Extension);
         }
 
         private string ReadFileHeader(FileInfo file)

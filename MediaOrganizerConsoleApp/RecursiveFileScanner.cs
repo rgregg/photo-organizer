@@ -19,6 +19,14 @@ namespace MediaOrganizerConsoleApp
         protected ILogWriter LogWriter { get; set; }
         private FileTypeRecognizer Recognizer { get; set; }
 
+        /// <summary>
+        /// Creates a new instance of a recursive file scanner.
+        /// </summary>
+        /// <param name="source">Directory where the files to be scanned reside.</param>
+        /// <param name="recursive">Iterate through the subdirectories of the source directory.</param>
+        /// <param name="verbose">Output verbose status messages</param>
+        /// <param name="useDeepInspection">Look at the binary contents of the file to determine the file type, beyond just the extension.</param>
+        /// <param name="logWriter">Output logger for stauts messages and errors.</param>
         public RecursiveFileScanner(DirectoryInfo source, bool recursive, bool verbose, bool useDeepInspection, ILogWriter logWriter)
         {
             OriginalSource = source;

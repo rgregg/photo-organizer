@@ -1,28 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MediaOrganizerConsoleApp
+namespace MediaOrganizerConsoleApp.Commands
 {
     /// <summary>
     /// Verifies that the binary format of files matches the file extension for the file.
 
     /// </summary>
-    public class BinaryFormatScanner : RecursiveFileScanner
+    public class ScanMedia : RecursiveFileScanner
     {
         public bool InteractiveMode { get; set; }
-        public bool AutoAnswerYes { get; set; }
-        public bool AutoAnswerNo { get; set; }
 
-        public BinaryFormatScanner(ScanCommandOptions opts, ILogWriter logWriter)
-            : base(new DirectoryInfo(opts.SourceFolder), opts.Recursive, opts.VerboseOutput, true, logWriter)
+        public Program.AnswerMode AutoAnswer { get; set; }
+
+        public ScanMedia(DirectoryInfo source, ScanCommandOptions opts, ILogWriter logWriter)
+            : base(source, opts.Recursive, opts.VerboseOutput, true, logWriter)
         {
             InteractiveMode = true;
-            AutoAnswerYes = opts.DefaultToYes;
-            AutoAnswerNo = opts.DefaultToNo;
+            if (opts.DefaultToNo)
+            {
+                AutoAnswer = Program.AnswerMode.AutoNo;
+            }
+            else if (opts.DefaultToYes)
+            {
+                AutoAnswer = Program.AnswerMode.AutoYes;
+            }
         }
 
         protected override void ScanFile(FileInfo file, FormatSignature signature)
@@ -44,7 +47,7 @@ namespace MediaOrganizerConsoleApp
                     if (InteractiveMode)
                     {
                         // Extension doesn't match expected value
-                        if (AskYesOrNoQuestion($"File {file.Name} is {signature.Format} -- rename to correct extension ({expectedFileExtension})?", true))
+                        if (Program.AskYesOrNoQuestion($"File {file.Name} is {signature.Format} -- rename to correct extension ({expectedFileExtension})?", true, AutoAnswer))
                         {
                             RenameFileExtension(file, expectedFileExtension);
                         }
@@ -90,49 +93,5 @@ namespace MediaOrganizerConsoleApp
             }
         }
 
-        private bool AskYesOrNoQuestion(string prompt, bool defaultIsYes)
-        {
-            Console.Write(prompt);
-            if(defaultIsYes)
-            {
-                Console.Write(" [Y/n]: ");
-            }
-            else
-            {
-                Console.Write(" [y/N]: ");
-            }
-
-            if (AutoAnswerNo)
-            {
-                Console.WriteLine("N");
-                return false;
-            }
-            else if (AutoAnswerYes)
-            {
-                Console.WriteLine("Y");
-                return true;
-            }
-            else
-            {
-                string line = Console.ReadLine();
-                if (string.IsNullOrEmpty(line))
-                {
-                    return defaultIsYes;
-                }
-
-                if (line.Equals("y", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-
-                if (line.Equals("n", StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                Console.WriteLine("Invalid input. Try again.");
-                return AskYesOrNoQuestion(prompt, defaultIsYes);
-            }
-        }
     }
 }

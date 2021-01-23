@@ -25,48 +25,47 @@ namespace MediaOrganizerConsoleApp.FormatConversion
         {
             Logger = logger;
             CopyMetadata = true;
+            Resize = false;
             OutputFormat = "jpg";
-            OutputQuality = 100;
-            DefaultGeometry = new Geometry { Width = 2048, Height = 2048, Mode = ResizeOptions.Default };
+            OutputQuality = 80;
+            Geometry = null;
         }
 
-        public Geometry DefaultGeometry { get; set; }
+        public GeometrySettings Geometry { get; set; }
         public bool CopyMetadata { get; set; }
         public string OutputFormat { get; set; }
         public int OutputQuality { get; set; }
         private ILogWriter Logger { get; set; }
+        public bool Resize { get; set; }
 
-        public bool ConvertFormat(FileInfo source, string destination)
+        public void ConvertFormat(FileInfo source, string destination)
         {
             var tempDestination = Path.GetTempFileName();
-
             try
             {
-                var result = ConvertImage(source.FullName, DefaultGeometry, destination);
-                if (!result)
-                {
-                    Logger.WriteLog($"Unable to convert file {source.Name} to desired format.", false);
-                    return false;
-                }
+                ConvertMediaFile(source.FullName, tempDestination);
 
                 if (CopyMetadata)
                 {
-                    result = CopyExifMetadata(source.FullName, tempDestination);
-                    if (!result)
-                    {
-                        Logger.WriteLog($"Unable to copy metadata from {source.Name} to output file.", false);
-                        return false;
-                    }
+                    CopyExifMetadata(source.FullName, tempDestination);
                 }
 
-                File.Copy(source.FullName, destination);
+                var finalDestinationFile = new FileInfo(destination);
+                var finalDestinationDirectory = finalDestinationFile.Directory;
+                if (!finalDestinationDirectory.Exists)
+                {
+                    finalDestinationDirectory.Create();
+                }
 
-                return true;
+                File.Copy(tempDestination, destination);
+            }
+            catch (MediaConversionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
                 Logger.WriteLog($"Error converting file format: {ex.Message}.", false);
-                return false;
             }
             finally
             {
@@ -74,24 +73,62 @@ namespace MediaOrganizerConsoleApp.FormatConversion
             }
         }
 
-        public bool ConvertImage(string source, Geometry geo, string destination)
+        protected void ConvertMediaFile(string source, string destination)
         {
-            List<string> cmdParams = new List<string> 
-            {
-                source,
-                "-resize",
-                geo.CommandLineParameter,
-                "-quality",
-                OutputQuality.ToString(),
-                $"{OutputFormat}:{destination}" 
-            };
+            if (Resize && Geometry == null)
+                throw new NotSupportedException("Geometry must be provided if Resize is true.");
+            if (string.IsNullOrEmpty(source))
+                throw new ArgumentException("source requires a value.");
+            if (string.IsNullOrEmpty(destination))
+                throw new ArgumentException("destination requires a value.");
 
-            int result = RunProcess(ImageMagickBinaryName, cmdParams, Logger);
-            return (result == 0);
+            if (!File.Exists(source))
+                throw new ArgumentException("source does not exist.");
+            
+            List<string> cmdParams = new List<string>() { source };
+            if (Resize)
+            {
+                cmdParams.Add("-resize");
+                cmdParams.Add(Geometry.CommandLineParameter);
+            }
+            if (OutputQuality > 0)
+            {
+                cmdParams.Add("-quality");
+                cmdParams.Add(OutputQuality.ToString());
+            }
+            cmdParams.Add($"{OutputFormat}:{destination}");
+
+            try
+            {
+                var result = RunProcess(ImageMagickBinaryName, cmdParams, Logger);
+                if (result.ExitCode != 0)
+                {
+                    throw new MediaConversionException($"Unable to convert media file, ImageMagick returned an error code: {result.ExitCode}.") 
+                    {
+                        StandardOutput = result.StandardOutput, 
+                        StandardError = result.StandardError,
+                        ExitCode = result.ExitCode
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new MediaConversionException($"Unable to convert media file, an unexpected error occured: {ex.Message}", ex);
+            }
         }
 
-        public bool CopyExifMetadata(string source, string destination)
+        protected void CopyExifMetadata(string source, string destination)
         {
+            if (string.IsNullOrEmpty(source))
+                throw new ArgumentException("source cannot be empty");
+            if (string.IsNullOrEmpty(destination))
+                throw new ArgumentException("destination cannot be empty.");
+            if (!File.Exists(source))
+                throw new FileNotFoundException($"Source file '{source}' does not exist.");
+            if (!File.Exists(destination))
+                throw new FileNotFoundException($"Destination file '{destination}' does not exist.");
+
+
             List<string> cmdParams = new List<string>
             {
                 "-tagsfromfile",
@@ -100,11 +137,52 @@ namespace MediaOrganizerConsoleApp.FormatConversion
                 destination
             };
 
-            int result = RunProcess(ExifToolBinary, cmdParams, Logger);
-            return (result == 0);
+
+            try
+            {
+                var result = RunProcess(ExifToolBinary, cmdParams, Logger);
+                if (result.ExitCode != 0)
+                {
+                    throw new MediaConversionException($"Unable to copy exif metadata to destination file. exiftool returned an error: {result.ExitCode}")
+                    {
+                        StandardError = result.StandardError,
+                        StandardOutput = result.StandardOutput,
+                        ExitCode = result.ExitCode
+                    };
+                }
+            }
+            catch (MediaConversionException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new MediaConversionException($"Unable to copy exif metadata to the destination file: {ex.Message}", ex);
+            }
         }
 
-        private static int RunProcess(string binaryName, IEnumerable<string> args, ILogWriter logger)
+        private class RunProcessResults
+        {
+            public RunProcessResults() { }
+
+            public RunProcessResults(Process proc)
+            {
+                if (!proc.HasExited)
+                {
+                    throw new ArgumentException("Cannot create a RunProcessResults instance on a process that is still running.");
+                }
+
+                ExitCode = proc.ExitCode;
+                StandardOutput = proc.StandardOutput.ReadToEnd();
+                StandardError = proc.StandardError.ReadToEnd();
+            }
+
+            public int ExitCode { get; set; }
+            public string StandardOutput { get; set; }
+            public string StandardError { get; set; }
+        }
+
+        private static RunProcessResults RunProcess(string binaryName, IEnumerable<string> args, ILogWriter logger)
         {
             var proc = new Process {
                 StartInfo = new ProcessStartInfo()
@@ -124,11 +202,8 @@ namespace MediaOrganizerConsoleApp.FormatConversion
             {
                 proc.Start();
                 proc.WaitForExit();
-                
-                // Read the console output
-                string result = proc.StandardOutput.ReadToEnd();
 
-                return proc.ExitCode;
+                return new RunProcessResults(proc);
             }
             catch (Exception ex)
             {
@@ -151,11 +226,12 @@ namespace MediaOrganizerConsoleApp.FormatConversion
                 {
                     output.Append(arg);
                 }
+                output.Append(' ');
             }
             return output.ToString();
         }
 
-        public class Geometry
+        public class GeometrySettings
         {
             public int Width { get; set; }
             public int Height { get; set; }
