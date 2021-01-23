@@ -28,6 +28,11 @@ namespace MediaOrganizerConsoleApp
             BreakForDebugger(opts);
             SetupLogging(opts);
 
+            // Check for dependencies
+            if (!FormatConversion.ImageMagick.AreDependenciesInstalled(this))
+            {
+                return;
+            }
 
             // Default to current folder
             if (string.IsNullOrEmpty(opts.SourceFolder))

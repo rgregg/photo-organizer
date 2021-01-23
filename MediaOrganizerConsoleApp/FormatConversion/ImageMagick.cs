@@ -17,8 +17,12 @@ namespace MediaOrganizerConsoleApp.FormatConversion
 
         static ImageMagick()
         {
-            // TODO: Set the binary names based on the OS
-
+            // Set the binary names based on the OS
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                ImageMagickBinaryName = "magick";
+                ExifToolBinary = "exiftool";
+            }
         }
 
         public ImageMagick(ILogWriter logger)
@@ -229,6 +233,37 @@ namespace MediaOrganizerConsoleApp.FormatConversion
                 output.Append(' ');
             }
             return output.ToString();
+        }
+
+        /// <summary>
+        /// Verify that a compatible version of ImageMagick is installed
+        /// </summary>
+        /// <returns></returns>
+        public static bool AreDependenciesInstalled(ILogWriter logger)
+        {
+            try
+            {
+                var results = RunProcess(ImageMagickBinaryName, new string[] { "--version" }, logger);
+
+                using (var reader = new StringReader(results.StandardOutput))
+                {
+                    var version = reader.ReadLine();
+                    logger.WriteLog($"ImageMagick {version}", false);
+                }
+
+                results = RunProcess(ExifToolBinary, new string[] { "-ver" }, logger);
+                using (var reader = new StringReader(results.StandardOutput))
+                {
+                    var version = reader.ReadLine();
+                    logger.WriteLog($"exiftool version: {version}", false);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Dependencies are not installed: {ex.Message}", false);
+                return false;
+            }
         }
 
         public class GeometrySettings

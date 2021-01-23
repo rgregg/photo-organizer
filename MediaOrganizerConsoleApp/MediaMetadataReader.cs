@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+
+#if Windows
 using Microsoft.WindowsAPICodePack.Shell;
 using Microsoft.WindowsAPICodePack.Shell.PropertySystem;
-using System.IO;
+#endif
+
 
 namespace MediaOrganizerConsoleApp
 {
@@ -18,6 +22,7 @@ namespace MediaOrganizerConsoleApp
             logger.WriteLog($"Metadata parser: Reading {sourceFile.Name} metadata with Shell32.", true);
 
             var results = new MediaMetadata();
+#if Windows
             try
             {
                 var file = ShellFile.FromFilePath(sourceFile.FullName);
@@ -29,6 +34,9 @@ namespace MediaOrganizerConsoleApp
             {
                 logger.WriteLog($"Unable to read metadata from {sourceFile.Name}: {ex.Message}", true);
             }
+#elif Linux || OSX
+            // TBD
+#endif
 
             return results;
         }
