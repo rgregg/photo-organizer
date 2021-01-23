@@ -9,11 +9,10 @@ using System.Runtime.InteropServices;
 
 namespace MediaOrganizerConsoleApp.FormatConversion
 {
-    public class ImageMagick
+    public class ImageMagick : AppInvoker
     {
         private static readonly string ImageMagickBinaryName = "magick.exe";
-        private static readonly string ExifToolBinary = "exiftool.exe";
-        private static readonly char ArgumentEscapeChar = '\"';
+        
 
         static ImageMagick()
         {
@@ -21,7 +20,7 @@ namespace MediaOrganizerConsoleApp.FormatConversion
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 ImageMagickBinaryName = "magick";
-                ExifToolBinary = "exiftool";
+                
             }
         }
 
@@ -33,6 +32,7 @@ namespace MediaOrganizerConsoleApp.FormatConversion
             OutputFormat = "jpg";
             OutputQuality = 80;
             Geometry = null;
+            Overwrite = false;
         }
 
         public GeometrySettings Geometry { get; set; }
@@ -41,6 +41,7 @@ namespace MediaOrganizerConsoleApp.FormatConversion
         public int OutputQuality { get; set; }
         private ILogWriter Logger { get; set; }
         public bool Resize { get; set; }
+        public bool Overwrite { get; set; }
 
         public void ConvertFormat(FileInfo source, string destination)
         {
@@ -51,7 +52,7 @@ namespace MediaOrganizerConsoleApp.FormatConversion
 
                 if (CopyMetadata)
                 {
-                    CopyExifMetadata(source.FullName, tempDestination);
+                    ExifTool.CopyExifMetadata(source.FullName, tempDestination, Logger);
                 }
 
                 var finalDestinationFile = new FileInfo(destination);
@@ -61,7 +62,7 @@ namespace MediaOrganizerConsoleApp.FormatConversion
                     finalDestinationDirectory.Create();
                 }
 
-                File.Copy(tempDestination, destination);
+                File.Copy(tempDestination, destination, Overwrite);
             }
             catch (MediaConversionException)
             {
@@ -111,47 +112,8 @@ namespace MediaOrganizerConsoleApp.FormatConversion
                     {
                         StandardOutput = result.StandardOutput, 
                         StandardError = result.StandardError,
-                        ExitCode = result.ExitCode
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new MediaConversionException($"Unable to convert media file, an unexpected error occured: {ex.Message}", ex);
-            }
-        }
-
-        protected void CopyExifMetadata(string source, string destination)
-        {
-            if (string.IsNullOrEmpty(source))
-                throw new ArgumentException("source cannot be empty");
-            if (string.IsNullOrEmpty(destination))
-                throw new ArgumentException("destination cannot be empty.");
-            if (!File.Exists(source))
-                throw new FileNotFoundException($"Source file '{source}' does not exist.");
-            if (!File.Exists(destination))
-                throw new FileNotFoundException($"Destination file '{destination}' does not exist.");
-
-
-            List<string> cmdParams = new List<string>
-            {
-                "-tagsfromfile",
-                source,
-                "-all:all",
-                destination
-            };
-
-
-            try
-            {
-                var result = RunProcess(ExifToolBinary, cmdParams, Logger);
-                if (result.ExitCode != 0)
-                {
-                    throw new MediaConversionException($"Unable to copy exif metadata to destination file. exiftool returned an error: {result.ExitCode}")
-                    {
-                        StandardError = result.StandardError,
-                        StandardOutput = result.StandardOutput,
-                        ExitCode = result.ExitCode
+                        ExitCode = result.ExitCode,
+                        CommandLine = result.CommandLine,
                     };
                 }
             }
@@ -161,85 +123,15 @@ namespace MediaOrganizerConsoleApp.FormatConversion
             }
             catch (Exception ex)
             {
-                throw new MediaConversionException($"Unable to copy exif metadata to the destination file: {ex.Message}", ex);
+                throw new MediaConversionException($"Unable to convert media file, an unexpected error occured: {ex.Message}", ex);
             }
-        }
-
-        private class RunProcessResults
-        {
-            public RunProcessResults() { }
-
-            public RunProcessResults(Process proc)
-            {
-                if (!proc.HasExited)
-                {
-                    throw new ArgumentException("Cannot create a RunProcessResults instance on a process that is still running.");
-                }
-
-                ExitCode = proc.ExitCode;
-                StandardOutput = proc.StandardOutput.ReadToEnd();
-                StandardError = proc.StandardError.ReadToEnd();
-            }
-
-            public int ExitCode { get; set; }
-            public string StandardOutput { get; set; }
-            public string StandardError { get; set; }
-        }
-
-        private static RunProcessResults RunProcess(string binaryName, IEnumerable<string> args, ILogWriter logger)
-        {
-            var proc = new Process {
-                StartInfo = new ProcessStartInfo()
-                {
-                    FileName = binaryName,
-                    Arguments = ConvertToArgs(args),
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                }
-            };
-
-            logger.WriteLog($"Executing {proc.StartInfo.FileName} {proc.StartInfo.Arguments}...", true);
-
-            try
-            {
-                proc.Start();
-                proc.WaitForExit();
-
-                return new RunProcessResults(proc);
-            }
-            catch (Exception ex)
-            {
-                logger.WriteLog($"Error executing process: {ex.Message}", true);
-                throw;
-            }
-        }
-
-        private static string ConvertToArgs(IEnumerable<string> input)
-        {
-            StringBuilder output = new StringBuilder();
-            foreach(string arg in input)
-            {
-                if (arg.Contains(' ')) {
-                    output.Append(ArgumentEscapeChar);
-                    output.Append(arg);
-                    output.Append(ArgumentEscapeChar);
-                }
-                else
-                {
-                    output.Append(arg);
-                }
-                output.Append(' ');
-            }
-            return output.ToString();
         }
 
         /// <summary>
         /// Verify that a compatible version of ImageMagick is installed
         /// </summary>
         /// <returns></returns>
-        public static bool AreDependenciesInstalled(ILogWriter logger)
+        public static bool IsToolInstalled(ILogWriter logger)
         {
             try
             {
@@ -251,17 +143,11 @@ namespace MediaOrganizerConsoleApp.FormatConversion
                     logger.WriteLog($"ImageMagick {version}", false);
                 }
 
-                results = RunProcess(ExifToolBinary, new string[] { "-ver" }, logger);
-                using (var reader = new StringReader(results.StandardOutput))
-                {
-                    var version = reader.ReadLine();
-                    logger.WriteLog($"exiftool version: {version}", false);
-                }
-                return true;
+                return ExifTool.IsToolInstalled(logger);
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Dependencies are not installed: {ex.Message}", false);
+                logger.WriteLog($"ImageMagick is not installed: {ex.Message}", false);
                 return false;
             }
         }
@@ -277,7 +163,7 @@ namespace MediaOrganizerConsoleApp.FormatConversion
             {
                 get
                 {
-                    StringBuilder output = new StringBuilder($"'{Width}x{Height}");
+                    StringBuilder output = new StringBuilder($"\"{Width}x{Height}");
                     switch (Mode)
                     {
                         case ResizeOptions.Percentage:
@@ -299,7 +185,7 @@ namespace MediaOrganizerConsoleApp.FormatConversion
                             output.Append("<");
                             break;
                     }
-                    output.Append("'");
+                    output.Append("\"");
                     return output.ToString();
                 }
             }

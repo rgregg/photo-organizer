@@ -29,7 +29,7 @@ namespace MediaOrganizerConsoleApp
             SetupLogging(opts);
 
             // Check for dependencies
-            if (!FormatConversion.ImageMagick.AreDependenciesInstalled(this))
+            if (!FormatConversion.ImageMagick.IsToolInstalled(this))
             {
                 return;
             }
@@ -165,7 +165,7 @@ namespace MediaOrganizerConsoleApp
         {
             if (opts.Debug)
             {
-                Debugger.Break();
+                Debugger.Launch();
             }
         }
 

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MediaOrganizerConsoleApp
 {
-    interface IProgressReporter
+    public interface IProgressReporter
     {
         void ShowProgressBar(int maxItems);
         void HideProgressBar();

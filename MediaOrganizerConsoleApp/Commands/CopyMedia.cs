@@ -42,7 +42,7 @@ namespace MediaOrganizerConsoleApp.Commands
             
             UseCache = opts.CacheFileInfo;
             DestinationDirectoryFormat = opts.DirectoryFormat;
-            MediaTypesToOrganizer = new List<MediaType> { MediaType.Image, MediaType.Video };
+            MediaTypesToOrganizer = new List<MediaType> { MediaType.Picture, MediaType.Video };
             ActionOnExistingFile = opts.ConflictBehavior;
         }
 
@@ -137,7 +137,7 @@ namespace MediaOrganizerConsoleApp.Commands
             LogWriter.WriteLog($"Metadata: Found a record for {file.Name}: {metadata}, {type}, {format}", true);
             if (null == metadata || type == MediaType.Default || format == BinaryFormat.Unknown)
             {
-                metadata = MediaMetadataReader.ParseFile(file, LogWriter);
+                metadata = ExifTool.ParseFile(file, LogWriter);
                 if (UseCache) 
                 {
                     Cache.Add(file, metadata, signature); 

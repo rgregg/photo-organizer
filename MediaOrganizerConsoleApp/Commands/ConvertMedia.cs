@@ -30,7 +30,8 @@ namespace MediaOrganizerConsoleApp.Commands
                     Height = opts.Height,
                     Width = opts.Width,
                     Mode = FormatConversion.ImageMagick.ResizeOptions.ShrinkAspectPreserved
-                }
+                },
+                Overwrite = opts.Overwrite,
             };
         }
 
@@ -49,7 +50,9 @@ namespace MediaOrganizerConsoleApp.Commands
         {
             base.ScanFile(file, signature);
 
-            var destinationFile = Path.Combine(Destination.FullName, RelativePathFromSource(file), file.Name);
+            var destinationName = Path.GetFileNameWithoutExtension(file.Name) + $".{Converter.OutputFormat}";
+
+            var destinationFile = Path.Combine(Destination.FullName, RelativePathFromSource(file), destinationName);
             Converter.ConvertFormat(file, destinationFile);
         }
 

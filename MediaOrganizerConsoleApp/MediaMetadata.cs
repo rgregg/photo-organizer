@@ -15,11 +15,10 @@ namespace MediaOrganizerConsoleApp
     public enum MediaType
     {
         Default,
-        Image,
+        Picture,
         Video,
         Metadata,
         System
     }
 
 }
-

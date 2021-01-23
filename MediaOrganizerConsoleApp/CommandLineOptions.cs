@@ -39,6 +39,9 @@ namespace MediaOrganizerConsoleApp
 
         [Option("quality", Default = 80, HelpText = "Quality setting for the output files")]
         public int Quality { get; set; }
+
+        [Option("overwrite", Default = false, HelpText = "Overwrite existing files in the output directory.")]
+        public bool Overwrite { get; set; }
     }
 
     [Verb("scan", HelpText = "Scan and report on files in the source directory.")]

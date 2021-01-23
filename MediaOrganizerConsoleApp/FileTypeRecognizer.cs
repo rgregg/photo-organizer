@@ -15,25 +15,25 @@ namespace MediaOrganizerConsoleApp
         private static List<FormatSignature> Formats = new List<FormatSignature>()
         {
             // Image formats
-            new FormatSignature(MediaType.Image, BinaryFormat.Jpeg, new string[] { ".jpg", ".jpeg" }, 
+            new FormatSignature(MediaType.Picture, BinaryFormat.Jpeg, new string[] { ".jpg", ".jpeg" }, 
                 new ByteRangeMatch("FF D8 FF E0 ?? ?? 4A 46 49 46 00"),
                 new ByteRangeMatch("FF D8 FF DB"),
                 new ByteRangeMatch("FF D8 FF E1 ?? ?? 45 78 69 66 00"),
                 new ByteRangeMatch("FF D8 FF EE")),
-            new FormatSignature(MediaType.Image, BinaryFormat.Png, ".png", 
+            new FormatSignature(MediaType.Picture, BinaryFormat.Png, ".png", 
                 new ByteRangeMatch(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)),
-            new FormatSignature(MediaType.Image, BinaryFormat.Heic, ".heic", 
+            new FormatSignature(MediaType.Picture, BinaryFormat.Heic, ".heic", 
                 new ByteRangeMatch(ByteRangeMatch.Wildcard, ByteRangeMatch.Wildcard, ByteRangeMatch.Wildcard, ByteRangeMatch.Wildcard, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00 )),
-            new FormatSignature(MediaType.Image, BinaryFormat.CanonRawCr2, ".cr2", 
+            new FormatSignature(MediaType.Picture, BinaryFormat.CanonRawCr2, ".cr2", 
                 new ByteRangeMatch(0x49, 0x49, 0x2A, 0x00, 0x10, 0x00, 0x00, 0x00, 0x43, 0x52, 0x02, 0x00 )),
-            new FormatSignature(MediaType.Image, BinaryFormat.Gif, ".gif",
+            new FormatSignature(MediaType.Picture, BinaryFormat.Gif, ".gif",
                 new ByteRangeMatch(0x47, 0x49, 0x46, 0x38, 0x37, 0x61),
                 new ByteRangeMatch(0x47, 0x49, 0x46, 0x38, 0x39, 0x61)),
-            new FormatSignature(MediaType.Image, BinaryFormat.Dng, ".dng",
+            new FormatSignature(MediaType.Picture, BinaryFormat.Dng, ".dng",
                 new ByteRangeMatch(0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, ByteRangeMatch.Wildcard, 0x00, 0xfe, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00),
                 new ByteRangeMatch(0x4D, 0x4D, 0x00, 0x2A, 0x00, 0x00, 0x00)),
-            new FormatSignature(MediaType.Image, BinaryFormat.Bitmap, ".bmp"),
-            new FormatSignature(MediaType.Image, BinaryFormat.Tiff, new string[] { ".tif", ".tiff" }),
+            new FormatSignature(MediaType.Picture, BinaryFormat.Bitmap, ".bmp"),
+            new FormatSignature(MediaType.Picture, BinaryFormat.Tiff, new string[] { ".tif", ".tiff" }),
 
             // Video formats
             new FormatSignature(MediaType.Video, BinaryFormat.Avi, ".avi",
