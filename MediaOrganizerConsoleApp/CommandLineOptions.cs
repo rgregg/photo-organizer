@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CommandLine;
+﻿using CommandLine;
 
 namespace MediaOrganizerConsoleApp
 {
@@ -21,16 +16,13 @@ namespace MediaOrganizerConsoleApp
     [Verb("scan", HelpText = "Scan and report on files in the source directory.")]
     public class ScanCommandOptions : UniversalCommandLineOptions
     {
-        [Option('s', "source", HelpText = "Source folder path")]
+        [Option('s', "source", Required = true, HelpText = "Source folder path")]
         public string SourceFolder { get; set; }
-
-        [Option("parser", HelpText = "Choose the data parser used to evaluate the files.")]
-        public DataParser DataParser { get; set; }
 
         [Option('y', HelpText = "Answer yes/no questions with yes automatically.")]
         public bool DefaultToYes { get; set; }
 
-        [Option('n', HelpText = "Answer yes/nop questions with no automatically.")]
+        [Option('n', HelpText = "Answer yes/no questions with no automatically.")]
         public bool DefaultToNo { get; set; }
     }
 
