@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="FileTypeRecognizer.cs" />
     <Compile Include="BinaryFormatScanner.cs" />
+    <Compile Include="FormatConversion\ImageMagick.cs" />
     <Compile Include="FormatSignature.cs" />
     <Compile Include="ILogWriter.cs" />
     <Compile Include="ParserCache.cs" />
