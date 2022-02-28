@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PhotoOrganizer": {
+      "commandName": "Project",
+      "commandLineArgs": "dedupe --source D:\\Users\\ryan\\OneDrive\\FamilyPhotos\\Originals\\2019 --recursive"
+    }
+  }
+}

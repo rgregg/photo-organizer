@@ -7,96 +7,30 @@ using System.Threading.Tasks;
 
 namespace PhotoOrganizer
 {
-    class FileOrganizer
+    class FileOrganizer : DirectoryAndFileEnumerator<DateTimeOffset?>
     {
         public DirectoryInfo Destination { get; private set; }
 
-        OrganizedFilesAction Options { get; set; }
+        public OrganizedFilesAction Options { get; set; }
 
-        ParsedFileCache Cache { get; set; }
-
-        public FileOrganizer(DirectoryInfo destination)
+        public FileOrganizer(DirectoryInfo destination, OrganizedFilesAction opts, ParsedFileCache cache) : base(opts, cache)
         {
             this.Destination = destination;
-        }
-
-        public FileOrganizer(DirectoryInfo destination, OrganizedFilesAction opts, ParsedFileCache cache) : this(destination)
-        {
             this.Options = opts;
-            this.Cache = cache;
         }
 
-
-        public void ProcessSourceFolder(DirectoryInfo source)
+        protected override void ProcessFile(FileInfo file, ref DateTimeOffset? suggestion)
         {
-            if (Options.VerboseOutput)
-            {
-                Console.WriteLine("Process source folder {0}.", source.FullName);
-            }
-
-            var files = source.EnumerateFiles();
-            if (this.Options.RunInParallel)
-            {
-                Parallel.ForEach(files, file => ProcessFile(file));
-            }
-            else
-            {
-                DateTimeOffset? previousDateTime = null;
-                foreach (var file in files)
-                {
-                    previousDateTime = ProcessFile(file, previousDateTime);
-                }
-            }
-
-            if (this.Options.Recursive)
-            {
-                var folders = source.EnumerateDirectories();
-                if (Options.RunInParallel)
-                {
-                    Parallel.ForEach(folders, folder => ProcessSourceFolder(folder));
-                }
-                else
-                {
-                    foreach (var folder in folders) 
-                    { 
-                        ProcessSourceFolder(folder); 
-                    }
-                }
-            }
-        }
-
-        private DateTimeOffset? ProcessFile(FileInfo file, DateTimeOffset? suggestion = null)
-        {
-            MediaInfo info = null;
-            bool fromCache = false;
-            if (Options.CacheFileInfo)
-            {
-                MediaInfo cachedData;
-                if (Cache.CacheLookup(file, out cachedData))
-                {
-                    info = cachedData;
-                    fromCache = true;
-                }
-            }
-
-            if (null == info)
-            {
-                info = MediaInfoFactory.GetMediaInfo(file, Options.DataParser);
-            }
-
-            if (Options.CacheFileInfo && !fromCache)
-            {
-                Cache.Add(info);
-            }
+            var info = ParseFile(file);
 
             bool moveThisFile = info.Type == MediaType.Image || info.Type == MediaType.Video;
 
-            string action = moveThisFile ? this.Options.CopyInsteadOfMove ? "Copy" : "Move" : "Skipped";
+            string action = moveThisFile ? Options.CopyInsteadOfMove ? "Copy" : "Move" : "Skipped";
 
             DateTimeOffset? dateTaken = info.Taken;
             if (!dateTaken.HasValue && info.Type == MediaType.Video && suggestion.HasValue)
             {
-                if (this.Options.VerboseOutput) Console.WriteLine("Infering date for {0} as {1}", file.Name, suggestion);
+                if (Opts.VerboseOutput) Console.WriteLine("Infering date for {0} as {1}", file.Name, suggestion);
                 dateTaken = suggestion;
             }
 
@@ -145,51 +79,10 @@ namespace PhotoOrganizer
                 Console.WriteLine("Skipping file (not included type): " + info.Filename);
             }
 
-            return dateTaken;
+            // Pass our current value on to be used later if required
+            suggestion = dateTaken;
         }
 
-        private void VerboseLog(string message)
-        {
-            if (Options.VerboseOutput)
-                Console.WriteLine(message);
-        }
-
-        private bool FilesAreIdentifical(FileInfo source, FileInfo destination)
-        {
-            if (source.Name != destination.Name)
-            {
-                VerboseLog("Match failed: different filenames");
-                return false;
-            }
-
-            if (source.Length != destination.Length)
-            {
-                VerboseLog("Match failed: different sizes");
-                return false;
-            }
-
-            var source_crc = GetChecksum(source);
-            var dest_crc = GetChecksum(destination);
-            if (source_crc != dest_crc)
-            {
-                VerboseLog("Match failed: different hashes");
-                return false;
-            }
-
-            VerboseLog("Match succeeded. Files are the same.");
-            return true;
-        }
-
-        private string GetChecksum(FileInfo file)
-        {
-            int buffer_size = 1024 * 1024;
-            using (BufferedStream stream = new BufferedStream(file.OpenRead(), buffer_size))
-            {
-                System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create();
-                byte[] checksum = md5.ComputeHash(stream);
-                return BitConverter.ToString(checksum).Replace("-", string.Empty);
-            }
-        }
 
         private void FileAlreadyExists(FileInfo sourceFile, string targetPath)
         {

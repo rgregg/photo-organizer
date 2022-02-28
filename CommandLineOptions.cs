@@ -33,6 +33,9 @@ namespace PhotoOrganizer
         [Option("parser", HelpText = "Choose the data parser used to evaluate the files.")]
         public DataParser DataParser { get; set; }
 
+        [Option("queit", Default = false, HelpText = "Avoid any interactive prompts and proceed with the default settings.")]
+        public bool Quiet { get; set; }
+
     }
 
     abstract class OrganizedFilesAction : CommonCommandLineOptions
@@ -69,6 +72,7 @@ namespace PhotoOrganizer
     }
 
 
+    [Verb("dedupe", HelpText = "Look for duplication of files with similar filenames.")]
     class DeduplicateFilesAction : CommonCommandLineOptions
     {
 

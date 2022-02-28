@@ -23,9 +23,39 @@ namespace PhotoOrganizer
             
         }
 
-        static void DedupeFiles(DeduplicateFilesAction obj)
+        static void DedupeFiles(DeduplicateFilesAction opts)
         {
-            throw new NotImplementedException();
+            if (opts.Debug)
+            {
+                System.Diagnostics.Debugger.Break();
+            }
+
+            CleanInput(opts);
+
+            ParsedFileCache cache = new ParsedFileCache(opts.SourceFolder);
+            HookCancelKeyPress(-1, () =>
+            {
+                if (opts.CacheFileInfo)
+                {
+                    Console.WriteLine("Flushing cache to disk...");
+                    cache.PersistCache();
+                }
+            });
+
+            DirectoryInfo source = new(opts.SourceFolder);
+            if (!source.Exists)
+            {
+                Console.WriteLine("Error: Source folder doesn't exist. Nothing to do.");
+                return;
+            }
+
+            DedupeChecker checker = new DedupeChecker(opts, cache);
+            checker.ProcessSourceFolder(source);
+
+            if (cache.HasChanged)
+            {
+                cache.PersistCache();
+            }
         }
 
         static void ResetCache(ResetCacheAction opts)
@@ -43,43 +73,40 @@ namespace PhotoOrganizer
                 System.Diagnostics.Debugger.Break();
             }
 
+            CleanInput(opts);
+
             ParsedFileCache cache = new ParsedFileCache(opts.SourceFolder);
-            Console.CancelKeyPress += (sender, eventArgs) => {
-                
+            HookCancelKeyPress(-1, () =>
+            {
                 if (opts.CacheFileInfo)
                 {
                     Console.WriteLine("Flushing cache to disk...");
                     cache.PersistCache();
                 }
-                Environment.Exit(-1);
-            };
+            });
 
-
-            if (string.IsNullOrEmpty(opts.SourceFolder))
-                opts.SourceFolder = System.Environment.CurrentDirectory;
-
-            
-
-            DirectoryInfo destination = new DirectoryInfo(opts.DestinationFolder);
+            DirectoryInfo destination = new(opts.DestinationFolder);
             if (!destination.Exists)
             {
                 Console.WriteLine("Error: Destination folder doesn't exist.");
                 return;
             }
 
-            DirectoryInfo source = new DirectoryInfo(opts.SourceFolder);
+            DirectoryInfo source = new(opts.SourceFolder);
             if (!source.Exists)
             {
                 Console.WriteLine("Error: Source folder doesn't exist. Nothing to do.");
                 return;
             }
 
-            if (opts.ConflictBehavior == ExistingFileMode.Delete)
+            if (opts.ConflictBehavior == ExistingFileMode.Delete && !opts.Quiet)
             {
                 Console.Write("Delete source files on existing files in destination is enabled.\nTHIS MAY CAUSE DATA LOSS, are you sure? [Y/N]: ");
                 var key = Console.ReadKey();
                 if (!(key.KeyChar == 'y' || key.KeyChar == 'Y'))
+                {
                     return;
+                }
                 Console.WriteLine();
             }
 
@@ -91,6 +118,22 @@ namespace PhotoOrganizer
             }
         }
 
+        private static void CleanInput(CommonCommandLineOptions opts)
+        {
+            if (string.IsNullOrEmpty(opts.SourceFolder))
+            {
+                opts.SourceFolder = System.Environment.CurrentDirectory;
+            }
+        }
+
+        private static void HookCancelKeyPress(int exitCode, Action onCancelKeyPress)
+        {
+            Console.CancelKeyPress += (sender, eventArgs) => {
+                onCancelKeyPress();
+                Environment.Exit(exitCode);
+            };
+        }
+
         static void HandleParseError<T>(ParserResult<T> result, IEnumerable<Error> errs)
         {
             Console.WriteLine("errors {0}", errs.Count());
@@ -98,5 +141,7 @@ namespace PhotoOrganizer
             var helpText = CommandLine.Text.HelpText.AutoBuild(result);
             Console.WriteLine(helpText);
         }
+
+        
     }
 }
