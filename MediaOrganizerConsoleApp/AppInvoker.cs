@@ -7,7 +7,7 @@ namespace MediaOrganizerConsoleApp
 {
      public class AppInvoker
     {
-        private static readonly char ArgumentEscapeChar = ' ';
+        private static readonly char ArgumentEscapeChar = '"';
 
         protected AppInvoker() { }
 

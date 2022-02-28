@@ -57,6 +57,17 @@ namespace MediaOrganizerConsoleApp
         public bool DefaultToNo { get; set; }
     }
 
+    [Verb("dedupe", HelpText = "Check for duplicate files and optionally clean them up.")]
+    public class DupeCheckerCommandOptions : UniversalCommandLineOptions
+    {
+        [Option('s', "source", Required = true, HelpText = "Source folder for media files")]
+        public string SourceFolder { get; set; }
+        [Option("cache", Default = false, HelpText = "Use a persistent cache for expensive to calculate media properties")]
+        public bool CacheFileInfo { get; set; }
+
+
+    }
+
     public class OrganizeCommandLineOptions : UniversalCommandLineOptions
     {
         [Option('d', "destination", HelpText = "Parent directory where files should be moved", Required = true)]

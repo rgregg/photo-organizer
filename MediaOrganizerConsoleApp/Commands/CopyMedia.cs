@@ -52,7 +52,7 @@ namespace MediaOrganizerConsoleApp.Commands
         {
             base.ScanFile(file, signature);
 
-            MediaMetadata metadata = GetMediaInfo(file, signature);
+            MediaMetadata metadata = GetMediaInfo(file, signature, UseCache ? Cache : null, LogWriter);
             bool performAction = MediaTypesToOrganizer.Contains(signature.Type);
             if (!performAction)
             {
@@ -118,29 +118,37 @@ namespace MediaOrganizerConsoleApp.Commands
             }
         }
 
-        private MediaMetadata GetMediaInfo(FileInfo file, FormatSignature signature)
+        internal static MediaMetadata GetMediaInfo(FileInfo file, FormatSignature signature, ParserCache cache, ILogWriter logWriter)
         {
             MediaMetadata metadata = null;
             MediaType type = MediaType.Default;
             BinaryFormat format = BinaryFormat.Unknown;
 
             // Load cached data for the file, if available
-            if (UseCache && Cache.TryCacheLookup(file, out CacheEntry entry))
+            if (null != cache && cache.TryCacheLookup(file, out CacheEntry entry))
             {
-                WriteLog($"Loaded cached data for {file.Name}.", true);
+                logWriter.WriteLog($"Loaded cached data for {file.Name}.", true);
                 metadata = entry.Metadata;
                 type = entry.Type;
                 format = entry.Format;
             }
 
             // Calculate data if necessary
-            LogWriter.WriteLog($"Metadata: Found a record for {file.Name}: {metadata}, {type}, {format}", true);
+            logWriter.WriteLog($"Metadata: Found a record for {file.Name}: {metadata}, {type}, {format}", true);
             if (null == metadata || type == MediaType.Default || format == BinaryFormat.Unknown)
             {
-                metadata = ExifTool.ParseFile(file, LogWriter);
-                if (UseCache) 
+                try
                 {
-                    Cache.Add(file, metadata, signature); 
+                    metadata = ExifTool.ParseFile(file, logWriter);
+                } catch (Exception ex)
+                {
+                    logWriter.WriteLog(ex.ToString(), false);
+                    metadata = null;
+                }
+            
+                if (null != cache && null != metadata && null != signature) 
+                {
+                    cache.Add(file, metadata, signature); 
                 }
             }
             return metadata;

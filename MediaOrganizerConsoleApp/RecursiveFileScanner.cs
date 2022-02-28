@@ -16,8 +16,8 @@ namespace MediaOrganizerConsoleApp
         public DirectoryInfo OriginalSource { get; protected set; }
         public bool Recursive { get; protected set; }
         public bool Verbose { get; protected set; }
-        protected ILogWriter LogWriter { get; set; }
-        private FileTypeRecognizer Recognizer { get; set; }
+        protected ILogWriter LogWriter { get; private set; }
+        protected FileTypeRecognizer Recognizer { get; private set; }
 
         /// <summary>
         /// Creates a new instance of a recursive file scanner.
@@ -50,22 +50,26 @@ namespace MediaOrganizerConsoleApp
 
         protected virtual void ScanDirectory(DirectoryInfo source)
         {
-            WriteLog($"Scanning directory: {source.FullName}", false);
-
             var files = source.EnumerateFiles();
-            foreach (var file in files)
-            {
-                var fileSignature = Recognizer.DetectSignature(file);
 
-                if (!IsExcludedFile(file, fileSignature))
+            if (StartProcessingDirectory(source, files))
+            {
+                foreach (var file in files)
                 {
-                    ScanFile(file, fileSignature);
-                }
-                else
-                {
-                    WriteLog($"Skipping {file.Name} -- on excluded extension list.", true);
+                    var fileSignature = Recognizer.DetectSignature(file);
+
+                    if (!IsExcludedFile(file, fileSignature))
+                    {
+                        ScanFile(file, fileSignature);
+                    }
+                    else
+                    {
+                        WriteLog($"Skipping {file.Name} -- on excluded extension list.", true);
+                    }
                 }
             }
+
+            FinishedScanningFilesInDirectory(source, files);
 
             if (Recursive)
             {
@@ -75,6 +79,17 @@ namespace MediaOrganizerConsoleApp
                     ScanDirectory(folder);
                 }
             }
+        }
+
+        protected virtual bool StartProcessingDirectory(DirectoryInfo source, IEnumerable<FileInfo> files)
+        {
+            WriteLog($"Scanning directory: {source.FullName} containing {files.Count()} file(s).", false);
+            return true;
+        }
+
+        protected virtual void FinishedScanningFilesInDirectory(DirectoryInfo source, IEnumerable<FileInfo> files)
+        {
+
         }
 
         protected virtual void ScanFile(FileInfo file, FormatSignature signature)

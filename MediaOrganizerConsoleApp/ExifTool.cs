@@ -75,10 +75,18 @@ namespace MediaOrganizerConsoleApp
                     var captureDateString = $"{result.DateTimeOriginal} {result.OffsetTimeOriginal}";
 
                     DateTimeOffset? captureDate = null;
-                    if (!DateTimeOffset.TryParse(captureDateString, out DateTimeOffset parseResult))
+                    if (!DateTimeOffset.TryParse(captureDateString.Trim(), out DateTimeOffset parseResult))
                     {
-                        logger.WriteLog($"Unable to parse CaptureDate: {captureDateString}", false);
-                        captureDate = null;
+                        // 2019:01:07 16:33:35
+                        if (DateTimeOffset.TryParseExact(captureDateString.Trim(), new string[] { "yyyy:MM:dd HH:mm:ss", "yyyy:MM:dd HH:mm:ss zzz"}, null, System.Globalization.DateTimeStyles.AssumeLocal, out parseResult))
+                        {
+                            captureDate = parseResult;
+                        }
+                        else 
+                        {
+                            logger.WriteLog($"Unable to parse CaptureDate: {captureDateString}", false);
+                            captureDate = null;
+                        }
                     }
                     else
                     {

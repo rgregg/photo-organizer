@@ -13,14 +13,43 @@ namespace MediaOrganizerConsoleApp
             Console.WriteLine("PhotoOrganizer - {0}", Version);
             Program p = new Program();
 
-            Parser.Default.ParseArguments<CopyCommandOptions, MoveCommandOptions, ScanCommandOptions, ConvertCommandOptions>(args)
+            Parser.Default.ParseArguments<DupeCheckerCommandOptions, CopyCommandOptions, MoveCommandOptions, ScanCommandOptions, ConvertCommandOptions>(args)
                 .WithParsed<MoveCommandOptions>(options => { p.OrganizeMedia(false, options); })
                 .WithParsed<CopyCommandOptions>(options => { p.OrganizeMedia(true, options); })
                 .WithParsed<ScanCommandOptions>(options => { p.ScanMedia(options); })
+                .WithParsed<DupeCheckerCommandOptions>(options => { p.DedupeMedia(options); })
                 .WithParsed<ConvertCommandOptions>(options => { p.ConvertMedia(options); })
                 .WithNotParsed(errors => {
                     Console.WriteLine("Incorrect syntax. Error.");
                 });
+        }
+
+        private void DedupeMedia(DupeCheckerCommandOptions opts)
+        {
+            BreakForDebugger(opts);
+            SetupLogging(opts);
+            if (string.IsNullOrEmpty(opts.SourceFolder))
+            {
+                opts.SourceFolder = System.Environment.CurrentDirectory;
+            }
+
+            if (!VerifyDirectoryExists("Source", opts.SourceFolder, false, out DirectoryInfo source))
+            {
+                return;
+            }
+
+            if (!ExifTool.IsToolInstalled(this))
+            {
+                return;
+            }
+
+            ParserCache cache = new ParserCache(opts.SourceFolder, this);
+
+            WriteLog($"Looking for duplicate media in {source.FullName}.", false);
+
+            var scanner = new Commands.DedupeChecker(source, opts, cache, this);
+            scanner.Scan();
+
         }
 
         private void ConvertMedia(ConvertCommandOptions opts)
