@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using CommandLine.Text;
+using CommandLine;
 
 namespace PhotoOrganizer
 {
@@ -12,24 +12,38 @@ namespace PhotoOrganizer
     {
         static void Main(string[] args)
         {
-            var opts = new CommandLineOptions();
-            if (!CommandLine.Parser.Default.ParseArguments(args, opts))
-            {
-                Console.WriteLine(HelpText.AutoBuild(opts));
-                return;
-            }
+            var parser = new CommandLine.Parser(with => with.HelpWriter = null);
+            var parsedResult = parser.ParseArguments<MoveAction, CopyAction, ResetCacheAction, DeduplicateFilesAction>(args);
+            parsedResult
+                .WithParsed<MoveAction>(OrganizeFiles)
+                .WithParsed<CopyAction>(OrganizeFiles)
+                .WithParsed<ResetCacheAction>(ResetCache)
+                .WithParsed<DeduplicateFilesAction>(DedupeFiles)
+                .WithNotParsed(errs => HandleParseError(parsedResult, errs));
+            
+        }
 
+        static void DedupeFiles(DeduplicateFilesAction obj)
+        {
+            throw new NotImplementedException();
+        }
+
+        static void ResetCache(ResetCacheAction opts)
+        {
+            ParsedFileCache cache = new ParsedFileCache(opts.SourceFolder);
+            cache.ClearAll();
+            cache.PersistCache();
+            Console.WriteLine("Shared metadata cache has been cleared.");
+        }
+
+        static void OrganizeFiles(OrganizedFilesAction opts)
+        {
             if (opts.Debug)
             {
                 System.Diagnostics.Debugger.Break();
             }
 
             ParsedFileCache cache = new ParsedFileCache(opts.SourceFolder);
-            if (opts.ResetCache)
-            {
-                cache.ClearAll();
-            }
-
             Console.CancelKeyPress += (sender, eventArgs) => {
                 
                 if (opts.CacheFileInfo)
@@ -77,6 +91,12 @@ namespace PhotoOrganizer
             }
         }
 
-        
+        static void HandleParseError<T>(ParserResult<T> result, IEnumerable<Error> errs)
+        {
+            Console.WriteLine("errors {0}", errs.Count());
+
+            var helpText = CommandLine.Text.HelpText.AutoBuild(result);
+            Console.WriteLine(helpText);
+        }
     }
 }

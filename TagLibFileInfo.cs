@@ -17,6 +17,10 @@ namespace PhotoOrganizer
             {
                 Type = MediaType.Image;
             }
+            else
+            {
+                Type = MediaType.Unknown;
+            }
 
             TagLib.File file = null;
             try
@@ -29,13 +33,22 @@ namespace PhotoOrganizer
                 return;
             }
 
-            if (file is TagLib.Image.File image)
+            var imageTag = file.Tag as TagLib.Image.CombinedImageTag;
+            if (null != imageTag)
             {
                 Type = MediaType.Image;
-                CameraMake = image.ImageTag.Make;
-                CameraModel = image.ImageTag.Model;
-                Taken = image.ImageTag.DateTime;
+                CameraMake = imageTag.Make;
+                CameraModel = imageTag.Model;
+                Taken = imageTag.DateTime;
+                return;
             }
+
+            if (file.Properties.VideoWidth > 0)
+            {
+                Type = MediaType.Video;
+
+            }
+            
         }
     }
 }

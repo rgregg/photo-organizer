@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace PhotoOrganizer
 {
-    public class FileOrganizer
+    class FileOrganizer
     {
         public DirectoryInfo Destination { get; private set; }
 
-        CommandLineOptions Options { get; set; }
+        OrganizedFilesAction Options { get; set; }
 
         ParsedFileCache Cache { get; set; }
 
@@ -20,7 +20,7 @@ namespace PhotoOrganizer
             this.Destination = destination;
         }
 
-        public FileOrganizer(DirectoryInfo destination, CommandLineOptions opts, ParsedFileCache cache) : this(destination)
+        public FileOrganizer(DirectoryInfo destination, OrganizedFilesAction opts, ParsedFileCache cache) : this(destination)
         {
             this.Options = opts;
             this.Cache = cache;
