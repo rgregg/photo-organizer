@@ -57,6 +57,8 @@ namespace MediaOrganizerConsoleApp
                 "-Model",
                 "-FileType",
                 "-HandlerType",
+                "-ExifImageWidth",
+                "-ExifImageHeight",
                 "-json",
                 sourceFile.Name
             };
@@ -97,7 +99,9 @@ namespace MediaOrganizerConsoleApp
                     {
                         CameraMake = result.Make,
                         CameraModel = result.Model,
-                        DateCaptured = captureDate
+                        DateCaptured = captureDate,
+                        Width = result.ExifImageWidth,
+                        Height = result.ExifImageHeight
                     };
                 }
             }
@@ -163,6 +167,8 @@ namespace MediaOrganizerConsoleApp
             public string Model { get; set; }
             public string FileType { get; set; }
             public string HandlerType { get; set; }
+            public int ExifImageWidth { get; set; }
+            public int ExifImageHeight { get; set; }
         }
 
 
