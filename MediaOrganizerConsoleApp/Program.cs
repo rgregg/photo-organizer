@@ -6,11 +6,11 @@ using System.Diagnostics;
 
 namespace MediaOrganizerConsoleApp
 {
-    public class Program : ILogWriter
+    public class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("PhotoOrganizer - {0}", Version);
+            Console.WriteLine("MediaOrganizer - {0}", Version);
             Program p = new Program();
 
             Parser.Default.ParseArguments<DupeCheckerCommandOptions, CopyCommandOptions, MoveCommandOptions, ScanCommandOptions, ConvertCommandOptions>(args)
@@ -38,16 +38,16 @@ namespace MediaOrganizerConsoleApp
                 return;
             }
 
-            if (!ExifTool.IsToolInstalled(this))
+            if (!ExifTool.IsToolInstalled(defaultLogWriter))
             {
                 return;
             }
 
-            ParserCache cache = new ParserCache(opts.SourceFolder, this);
+            ParserCache cache = new ParserCache(opts.SourceFolder, defaultLogWriter);
 
-            WriteLog($"Looking for duplicate media in {source.FullName}.", false);
+            defaultLogWriter.WriteLog($"Looking for duplicate media in {source.FullName}.", false);
 
-            var scanner = new Commands.DedupeChecker(source, opts, cache, this);
+            var scanner = new Commands.DedupeChecker(source, opts, cache, defaultLogWriter);
             scanner.Scan();
 
         }
@@ -58,7 +58,7 @@ namespace MediaOrganizerConsoleApp
             SetupLogging(opts);
 
             // Check for dependencies
-            if (!FormatConversion.ImageMagick.IsToolInstalled(this))
+            if (!FormatConversion.ImageMagick.IsToolInstalled(defaultLogWriter))
             {
                 return;
             }
@@ -86,10 +86,10 @@ namespace MediaOrganizerConsoleApp
                 return;
             }
 
-            WriteLog($"Converting media files in {opts.SourceFolder} to {opts.DestinationFolder}", false);
-            WriteLog($"Resize: {opts.Resize}; Dimensions: {opts.Width}x{opts.Height}; Format: {opts.Format}; Quality: {opts.Quality}; Recursive: {opts.Recursive}", false);
+            defaultLogWriter.WriteLog($"Converting media files in {opts.SourceFolder} to {opts.DestinationFolder}", false);
+            defaultLogWriter.WriteLog($"Resize: {opts.Resize}; Dimensions: {opts.Width}x{opts.Height}; Format: {opts.Format}; Quality: {opts.Quality}; Recursive: {opts.Recursive}", false);
 
-            var converter = new Commands.ConvertMedia(source, destination, opts, this);
+            var converter = new Commands.ConvertMedia(source, destination, opts, defaultLogWriter);
             converter.Scan();
         }
 
@@ -98,11 +98,11 @@ namespace MediaOrganizerConsoleApp
             BreakForDebugger(opts);
             SetupLogging(opts);
 
-            WriteLog($"Organizing media in {opts.SourceFolder} to {opts.DestinationFolder}", false);
-            WriteLog($"Copy: {copyInsteadOfMove}; Conflict: {opts.ConflictBehavior}; Cache: {opts.CacheFileInfo}; Directory Format: {opts.DirectoryFormat}", true);
+            defaultLogWriter.WriteLog($"Organizing media in {opts.SourceFolder} to {opts.DestinationFolder}", false);
+            defaultLogWriter.WriteLog($"Copy: {copyInsteadOfMove}; Conflict: {opts.ConflictBehavior}; Cache: {opts.CacheFileInfo}; Directory Format: {opts.DirectoryFormat}", true);
             opts.CopyInsteadOfMove = copyInsteadOfMove;
 
-            ParserCache cache = new ParserCache(opts.SourceFolder, this);
+            ParserCache cache = new ParserCache(opts.SourceFolder, defaultLogWriter);
             if (opts.ResetCache)
             {
                 cache.ClearAll();
@@ -142,7 +142,7 @@ namespace MediaOrganizerConsoleApp
                 }
             }
 
-            var organizer = new Commands.CopyMedia(source, destination, opts, cache, this);
+            var organizer = new Commands.CopyMedia(source, destination, opts, cache, defaultLogWriter);
             organizer.Scan();
             if (cache.CacheHasChanged)
             {
@@ -161,7 +161,7 @@ namespace MediaOrganizerConsoleApp
                 }
                 else
                 {
-                    WriteLog($"Error: {directoryType} directory does not exist: {path}", false);
+                    defaultLogWriter.WriteLog($"Error: {directoryType} directory does not exist: {path}", false);
                     return false;
                 }
             }
@@ -184,9 +184,9 @@ namespace MediaOrganizerConsoleApp
                 return;
             }
 
-            WriteLog($"Scanning media in {source.FullName} for errors.", false);
+            defaultLogWriter.WriteLog($"Scanning media in {source.FullName} for errors.", false);
 
-            var scanner = new Commands.ScanMedia(source, opts, this);
+            var scanner = new Commands.ScanMedia(source, opts, defaultLogWriter);
             scanner.Scan();
         }
 
@@ -208,26 +208,15 @@ namespace MediaOrganizerConsoleApp
             }
         }
 
-        private bool VerboseLogOutput = false;
-        private StreamWriter LogFileStream = null;
-        public void WriteLog(string message, bool verbose)
-        {
-            if (!verbose || VerboseLogOutput)
-            {
-                Console.WriteLine(message);
-                if (null != LogFileStream)
-                {
-                    LogFileStream.WriteLine($"{DateTime.Now} - {message}");
-                }
-            }
-        }
-
+        AggregatedLogWriter defaultLogWriter;
         private void SetupLogging(UniversalCommandLineOptions opts)
         {
-            VerboseLogOutput = opts.VerboseOutput;
+            defaultLogWriter = new AggregatedLogWriter(opts.VerboseOutput);
+            defaultLogWriter.AddWriter(new ConsoleLogWriter(opts.VerboseOutput));
+
             if (!string.IsNullOrEmpty(opts.LogFile))
             {
-                LogFileStream = new StreamWriter(opts.LogFile, true) { AutoFlush = true };
+                defaultLogWriter.AddWriter(new StreamLogWriter(opts.LogFile, opts.VerboseOutput));
             }
         }
 

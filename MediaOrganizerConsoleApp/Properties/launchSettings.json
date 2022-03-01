@@ -2,7 +2,7 @@
   "profiles": {
     "MediaOrganizerConsoleApp": {
       "commandName": "Project",
-      "commandLineArgs": "dedupe --source D:\\Users\\ryan\\OneDrive\\FamilyPhotos\\Originals\\2019\\2019-01-January --recursive"
+      "commandLineArgs": "dedupe --source D:\\Users\\ryan\\OneDrive\\FamilyPhotos\\Originals\\ --recursive --ignore-live-photos"
     }
   }
 }

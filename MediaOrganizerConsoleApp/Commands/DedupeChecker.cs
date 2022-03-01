@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TableParser;
 
 namespace MediaOrganizerConsoleApp.Commands
 {
@@ -23,10 +24,17 @@ namespace MediaOrganizerConsoleApp.Commands
         {
             base.StartProcessingDirectory(directory, files);
 
+            string[] skipList = { ".xmp" };
+
             // Assign files to groups based on their filename key
             Dictionary<string, List<FileInfo>> matches = new Dictionary<string, List<FileInfo>>();
             foreach (var file in files)
             {
+                if (skipList.Contains(file.Extension.ToLower())) 
+                {
+                    continue;
+                }
+
                 var key = GenerateKey(file.Name);
                 List<FileInfo> otherFiles;
                 if (!matches.TryGetValue(key, out otherFiles))
@@ -53,21 +61,16 @@ namespace MediaOrganizerConsoleApp.Commands
         private void CompareMatchingFiles(string key, IEnumerable<FileInfo> inputFiles)
         {
             var files = new List<DuplicateScore>(
-                from f in inputFiles 
+                from f in inputFiles
                 select new DuplicateScore(f).Parse(Recognizer, Options.CacheFileInfo ? Cache : null, LogWriter));
 
-            if (Options.VerboseOutput)
+            if (Options.IgnoreLivePhotos && IsLivePhotoPair(files))
             {
-                StringWriter writer = new StringWriter();
-                writer.Write($"Potential match: {key}: ");
-                foreach (var file in files)
-                {
-                    writer.Write(file.FileInfo.Name);
-                }
-                writer.WriteLine();
-                LogWriter.WriteLog(writer.ToString(), true);
+                // Skip this pair as a duplicate
+                LogWriter.WriteLine($"Skipping Live Photo: {key}");
+                return;
             }
-
+            
             DateTimeOffset? captured = null;
             foreach (var file in files)
             {
@@ -83,7 +86,7 @@ namespace MediaOrganizerConsoleApp.Commands
                 }
                 else if (!file.Metadata.DateCaptured.HasValue || string.IsNullOrEmpty(file.Metadata.CameraModel))
                 {
-                    file.IsDuplicate = true;
+                    file.IsDuplicate = false;
                     file.Score *= 0.1;
                 }
             }
@@ -98,30 +101,96 @@ namespace MediaOrganizerConsoleApp.Commands
                 }
             }
 
-            WriteDuplicateScore(key, files, winner);
+            ChooseDuplicateWinner(key, files, winner);
 
-            Console.WriteLine("Press any key to continue");
-            Console.ReadLine();
         }
 
-        private void WriteDuplicateScore(string key, List<DuplicateScore> files, DuplicateScore winner)
+        private static bool IsLivePhotoPair(List<DuplicateScore> files)
+        {
+            var images = (from f in files
+                          where f.Signature.Type == MediaType.Picture
+                          select f);
+            var movies = (from f in files
+                          where f.Signature.Type == MediaType.Video && f.Signature.Format == BinaryFormat.QuickTime
+                          select f);
+            if (files.Count == 2 && images.Count() == 1 && movies.Count() == 1 &&
+                string.Equals(Path.GetFileNameWithoutExtension(images.First().FileInfo.Name),
+                              Path.GetFileNameWithoutExtension(movies.Single().FileInfo.Name)))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private void ChooseDuplicateWinner(string key, List<DuplicateScore> files, DuplicateScore winner)
         {
             Console.WriteLine();
-            Console.WriteLine($"Duplicate evaluation for {key}");
-            Console.WriteLine($" -- Winner: {winner.FileInfo.Name}");
-            Console.WriteLine();
-            Console.WriteLine("    Name        \tSize\tScore\tDupe\tDateTaken\tModel");
-            foreach (var file in files)
+            LogWriter.WriteLog($"Duplicate evaluation for {key}", false);
+            LogWriter.WriteLog($" -- Winner: {winner.FileInfo.Name}", false);
+
+            var table = files.ToStringTable(new string[] { "ID", "Name", "Format", "Size", "Score", "Dupe", "Date Taken", "Camera Model" },
+                f => $"{files.IndexOf(f)}" + (winner == f ? "*" : ""),
+                f => f.FileInfo.Name,
+                f => f.Signature.Format,
+                f => f.FileInfo.Length,
+                f => (int)(f.Score * 100),
+                f => f.IsDuplicate ? "Y" : "N",
+                f => f.Metadata.DateCaptured,
+                f => f.Metadata.CameraModel
+                );
+            LogWriter.WriteLog(table, false);
+            Console.Write($"[S]kip; or keep file with index [{files.IndexOf(winner)}]: ");
+            var input = Console.ReadLine();
+
+            int index;
+            if (input.Equals("s", StringComparison.OrdinalIgnoreCase))
             {
-                if (file == winner)
+                LogWriter.WriteLog("Skipping. No files deleted.", false);
+                return;
+            }
+            else if (int.TryParse(input, out index) && index >= 0 && index < files.Count())
+            {
+                winner = files[index];
+            }
+            else if (string.IsNullOrEmpty(input))
+            {
+                // Keep existing winner
+            }
+            else
+            {
+                LogWriter.WriteLog($"Unable to recognize input: \"{input}\". No action performed.", false);
+            }
+
+            LogWriter.WriteLog($"Keeping {winner.FileInfo.Name}, removing other files.", false);
+            DeleteNonWinnerFiles(winner, files);
+        }
+
+        private void DeleteNonWinnerFiles(DuplicateScore winner, IEnumerable<DuplicateScore> files)
+        {
+            var filesToRemove = new List<DuplicateScore>(files);
+            if (!filesToRemove.Remove(winner))
+            {
+                // Unable to find the winner, so we skip
+                LogWriter.WriteLog("Couldn't locate the winner, skipping delete operation. Try again later.", false);
+                return;
+            }
+
+            foreach (var file in filesToRemove)
+            {
+                if (!Options.Simulate)
                 {
-                    Console.Write(" >> ");
+                    LogWriter.WriteVerboseLine($"Deleting file {file.FileInfo.FullName}");
+                    try
+                    {
+                        file.FileInfo.Delete();
+                        LogWriter.WriteLine($"Deleted {file.FileInfo}.");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogWriter.WriteLine($"Unable to delete file {file.FileInfo.FullName}: {ex.Message}");
+                        LogWriter.WriteVerboseLine(ex.StackTrace);
+                    }
                 }
-                else
-                {
-                    Console.Write("    ");
-                }
-                Console.WriteLine($"{file.FileInfo.Name}\t{file.FileInfo.Length}\t{(int)(file.Score * 100)}\t{(file.IsDuplicate ? "Y" : "N")}\t{file.Metadata.DateCaptured}\t{file.Metadata.CameraModel}");
             }
         }
 

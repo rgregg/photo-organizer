@@ -74,25 +74,29 @@ namespace MediaOrganizerConsoleApp
                 var result = JsonConvert.DeserializeObject<List<ExifToolOutput>>(results.StandardOutput).FirstOrDefault();
                 if (null != result)
                 {
-                    var captureDateString = $"{result.DateTimeOriginal} {result.OffsetTimeOriginal}";
-
                     DateTimeOffset? captureDate = null;
-                    if (!DateTimeOffset.TryParse(captureDateString.Trim(), out DateTimeOffset parseResult))
+                    var captureDateString = $"{result.DateTimeOriginal} {result.OffsetTimeOriginal}";
+                    if (!string.IsNullOrWhiteSpace(captureDateString))
                     {
-                        // 2019:01:07 16:33:35
-                        if (DateTimeOffset.TryParseExact(captureDateString.Trim(), new string[] { "yyyy:MM:dd HH:mm:ss", "yyyy:MM:dd HH:mm:ss zzz"}, null, System.Globalization.DateTimeStyles.AssumeLocal, out parseResult))
+                        // try automatic parsing first
+                        if (DateTimeOffset.TryParse(captureDateString.Trim(), out DateTimeOffset parseResult))
                         {
                             captureDate = parseResult;
                         }
-                        else 
+                        else if (DateTimeOffset.TryParseExact(captureDateString.Trim(), 
+                            new string[] { 
+                                "yyyy:MM:dd HH:mm:ss", 
+                                "yyyy:MM:dd HH:mm:ss zzz", 
+                                "yyyy:MM:dd HH:mm:ss.00" 
+                            }, null, System.Globalization.DateTimeStyles.AssumeLocal, out parseResult))
                         {
-                            logger.WriteLog($"Unable to parse CaptureDate: {captureDateString}", false);
+                            captureDate = parseResult;
+                        }
+                        else
+                        {
+                            logger.WriteLog($"Unable to parse CaptureDate: \"{captureDateString}\"", false);
                             captureDate = null;
                         }
-                    }
-                    else
-                    {
-                        captureDate = parseResult;
                     }
 
                     return new MediaMetadata

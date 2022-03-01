@@ -65,6 +65,9 @@ namespace MediaOrganizerConsoleApp
         [Option("cache", Default = false, HelpText = "Use a persistent cache for expensive to calculate media properties")]
         public bool CacheFileInfo { get; set; }
 
+        [Option("ignore-live-photos", HelpText = "Ignore duplicate filenames where there is only an image and QuickTime video.")]
+        public bool IgnoreLivePhotos{ get; set; }
+
 
     }
 

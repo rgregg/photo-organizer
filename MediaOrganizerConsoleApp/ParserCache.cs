@@ -102,7 +102,7 @@ namespace MediaOrganizerConsoleApp
             {
                 if (null != LogWriter)
                 {
-                    LogWriter.WriteLog($"Error loading folder cache. We'll start a fresh one. {ex.Message}", false);
+                    LogWriter.WriteVerboseLine($"Error loading folder cache. We'll start a fresh one. {ex.Message}");
                 }
                 memoryCache = new Dictionary<string, CacheEntry>();
             }
